@@ -210,7 +210,7 @@ retranscribe = str_subs  # Alias.
 
 # # # # # # # # # #
 # Phonological pseudo-regexps.
-# todo: replace with equiv. wynini functions
+# todo: replace with equiv. wyfst functions
 
 
 def combos(s):
