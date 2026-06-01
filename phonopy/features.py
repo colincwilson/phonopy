@@ -31,31 +31,31 @@ class FeatureMatrix():
     # todo: warn about missing/nan feature values in matrix
     # see related: torchtext.vocab.Vocab
 
-    def __init__(self, symbols, vowels, features, ftr_matrix):
-        self.symbols = symbols  # Special symbols and segments.
-        self.vowels = vowels  # Symbols that are vowels.
+    def __init__(self, segments, vowels, features, ftr_matrix):
+        self.segments = segments  # Segments (incl. epsilon/bos/eos).
+        self.vowels = vowels  # Segments that are vowels.
         self.features = features  # Feature names.
         # Feature matrix, values in {'+', '-', '0'}.
-        # format: one row per symbol, features in columns
+        # format: one row per segment, features in columns
         self.ftr_matrix = ftr_matrix
         # Feature matrix as numpy array, values in {+1., -1., 0.}.
-        # format: one row per symbol, features in columns
+        # format: one row per segment, features in columns
         self.ftr_matrix_vec = self.to_numpy(ftr_matrix)
 
-        # Symbol <-> idx.
-        self.sym2idx = {}
-        self.idx2sym = {}
-        for idx, sym in enumerate(self.symbols):
-            self.sym2idx[sym] = idx
-            self.idx2sym[sym] = sym
+        # Segment <-> idx.
+        self.seg2idx = {}
+        self.idx2seg = {}
+        for idx, seg in enumerate(self.segments):
+            self.seg2idx[seg] = idx
+            self.idx2seg[idx] = seg
 
-        # Symbol -> feature-value dict and vector.
-        self.sym2ftrs = {}
-        self.sym2ftr_vec = {}
-        for i, sym in enumerate(self.symbols):
+        # Segment -> feature-value dict and vector.
+        self.seg2ftrs = {}
+        self.seg2ftr_vec = {}
+        for i, seg in enumerate(self.segments):
             ftrs = ftr_matrix.iloc[i, :].to_dict()
-            self.sym2ftrs[sym] = ftrs
-            self.sym2ftr_vec[sym] = tuple(ftrs.values())
+            self.seg2ftrs[seg] = ftrs
+            self.seg2ftr_vec[seg] = tuple(ftrs.values())
 
     # todo: make class method
     def to_numpy(self, ftr_matrix):
@@ -97,12 +97,12 @@ def import_features(feature_file=default_feature_file,
     Read feature matrix from file with segments in first *column*. 
     If segments is specified, eliminates constant and redundant features. 
     If standardize flag is set, add:
-    - epsilon symbol with all-zero feature vector.
-    - symbol-presence feature 'sym'.
+    - epsilon 'segment' with all-zero feature vector.
+    - non-epsilon feature 'sym'.
     - bos/eos delimiters and feature to identify them (begin:+1, end:-1).
     - feature 'seg' to identify all segments (non-epsilon/bos/eos).
     - feature 'C/V' to identify consonants (C) and vowels (V) (C:+1, V:-1).
-    Otherwise these symbols and features are assumed to be already 
+    Otherwise these segments and features are assumed to be already 
     present in the feature matrix or file.
     todo: arrange segments in IPA order
     """
@@ -245,7 +245,7 @@ def one_hot_features(segments=None,
     """
     Create one-hot feature matrix from list of segments
     (or number of ascii segments), optionally standardizing
-    with special symbols and features.
+    with epsilon/bos/eos and features.
     """
     if isinstance(segments, int):
         segments = string.ascii_lowercase[:segments]
@@ -275,48 +275,48 @@ def default_features(**kwargs):
 
 def standardize_matrix(fm):
     """
-    Add special symbols (epsilon, bos, eos) and features 
-    (sym, begin/end, seg, C/V) to feature matrix.
+    Add special segments (epsilon/bos/eos) and features 
+    (non-epsilon sym, begin/end, seg, C/V) to feature matrix.
     """
     if fm.vowels is None:
         print('Vowels must be specified to standardize feature matrix')
         sys.exit(0)
 
     # # # # # # # # # #
-    # Special symbols.
+    # Special sehments
     epsilon = phon_config.epsilon
     bos = phon_config.bos
     eos = phon_config.eos
     #wildcard = config.wildcard
-    syms = [epsilon, bos, eos, *fm.symbols]
+    segments = [epsilon, bos, eos, *fm.segments]
 
-    # Special symbols are unspecified for all ordinary features.
-    special_sym_vals = pd.DataFrame( \
+    # Special segments are unspecified for all ordinary features.
+    special_seg_vals = pd.DataFrame( \
         {ftr: '0' for ftr in fm.features},
         index=[0])
 
-    # Special symbols occupy first three rows of revised feature matrix.
+    # Special segments occupy first three rows of revised feature matrix.
     ftr_matrix = pd.concat( \
-        [special_sym_vals] * 3 +
+        [special_seg_vals] * 3 +
         [fm.ftr_matrix]).reset_index(drop=True)
 
     # # # # # # # # # #
     # Special features.
-    # Sym feature: all symbols except epsilon are +
-    sym_ftr_vals = ['0'] + ['+'] * (len(syms) - 1)
+    # Non-epsilon feature: all segments except epsilon are +
+    sym_ftr_vals = ['0'] + ['+'] * (len(segments) - 1)
 
     # Delim ftr: bos is +, eos is -,
-    # all others syms are unspecified.
-    delim_ftr_vals = ['0', '+', '-'] + ['0'] * (len(syms) - 3)
+    # all others segments are unspecified.
+    delim_ftr_vals = ['0', '+', '-'] + ['0'] * (len(segments) - 3)
 
-    # Seg ftr: consonants and vowels are '+',
-    # all other syms are unspecified.
-    seg_ftr_vals = ['0', '0', '0'] + ['+'] * (len(syms) - 3)
+    # Ordinary seg ftr: consonants and vowels are '+',
+    # all other segments are unspecified.
+    seg_ftr_vals = ['0', '0', '0'] + ['+'] * (len(segments) - 3)
 
     # C/V ftr: consonants are +, vowels are -,
-    # all other syms are unspecified.
+    # all other segments are unspecified.
     cv_ftr_vals = ['0', '0', '0'] + \
-        ['-' if seg in fm.vowels else '+' for seg in fm.symbols]
+        ['-' if seg in fm.vowels else '+' for seg in fm.segments]
 
     # Special features occupy first three
     # columns of revised feature matrix.
@@ -328,14 +328,14 @@ def standardize_matrix(fm):
     })
     ftr_matrix = pd.concat([special_ftrs, ftr_matrix], axis=1) \
                    .reset_index(drop=True)
-    ftr_matrix.index = syms
+    ftr_matrix.index = segments  # todo: checkme
     features = ['sym', 'begin/end', 'seg', 'C/V', *fm.features]
     phon_config.sym_ftr = sym_ftr = 0
     phon_config.delim_ftr = delim_ftr = 1
     phon_config.seg_ftr = seg_ftr = 2
     phon_config.cv_ftr = cv_ftr = 3
 
-    fm = FeatureMatrix(syms, fm.vowels, features, ftr_matrix)
+    fm = FeatureMatrix(segments, fm.vowels, features, ftr_matrix)
     return fm
 
 
@@ -485,26 +485,26 @@ def to_str(fm, ftrs):
     return ''.join(ret)
 
 
-def to_regexp(fm, syms):
+def to_regexp(fm, segs):
     """
-    Convert sequence of natural classes (symbol sets) or
+    Convert sequence of natural classes (segment sets) or
     feature-value dicts or a feature-matrix string to regexp.
     note: '[]' is interpreted as [+seg(ment)].
     """
     # Convert feature-matrix string to features.
-    if isinstance(syms, str):
-        syms = from_str(fm, syms)
-    # Promote singleton syms arg to list.
-    if not isinstance(syms, (list, tuple)):
-        syms = [syms]
+    if isinstance(segs, str):
+        segs = from_str(fm, segs)
+    # Promote singleton segs arg to list.
+    if not isinstance(segs, (list, tuple)):
+        segs = [segs]
     # Create regexp.
     ret = []
-    for syms1 in syms:
-        if isinstance(syms1, dict):
-            syms1 = natural_class(fm, syms1)
-        syms1 = list(syms1)
-        syms1.sort(key=lambda x: fm.symbols.index(x))
-        ret.append('(' + '|'.join(syms1) + ')')
+    for segs1 in segs:
+        if isinstance(segs1, dict):
+            segs1 = natural_class(fm, segs1)
+        segs1 = list(segs1)
+        segs1.sort(key=lambda x: fm.segments.index(x))
+        ret.append('(' + '|'.join(segs1) + ')')
     return ''.join(ret)
 
 
@@ -517,12 +517,12 @@ def is_zero(val):
 
 if __name__ == "__main__":
     fm = default_features()
-    print(fm.symbols)
+    print(fm.segments)
     print(fm.vowels)
     print(fm.features)
     print(fm.ftr_matrix)
     print(fm.ftr_matrix_vec)
-    #print(fm.ftr_matrix_vec.shape, len(fm.symbols), len(fm.features))
+    #print(fm.ftr_matrix_vec.shape, len(fm.segments), len(fm.features))
     print(get_features(fm, 'a'))
     print(fm.get_features('a'))
     print(natural_class(fm, '[+ syllabic ]'))

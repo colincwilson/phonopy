@@ -30,20 +30,20 @@ def squish(word):
     return ret
 
 
-def str_sep(word, syms=None, regexp=None):
+def str_sep(word, segs=None, regexp=None):
     """
-    Separate symbols in word with spaces using
-    symbol list or regexp.
+    Separate segments in word with spaces using
+    alphabet (list of segments) or regexp.
     # see: torchtext.data.functional.simple_space_split
     """
-    if syms is None and regexp is None:
+    if segs is None and regexp is None:
         regexp = "(.)"
     if regexp is None:
-        syms.sort(key=lambda x: len(x), reverse=True)
-        regexp = '(' + '|'.join(syms) + ')'
+        segs.sort(key=lambda x: len(x), reverse=True)
+        regexp = '(' + '|'.join(segs) + ')'
 
     if isinstance(word, _collection):
-        return [str_sep(word_, syms, regexp) for word_ in word]
+        return [str_sep(word_, segs, regexp) for word_ in word]
 
     ret = re.sub(regexp, "\\1 ", word)
     ret = squish(ret)
@@ -52,7 +52,7 @@ def str_sep(word, syms=None, regexp=None):
 
 def add_delim(word, edge='both', iostring=False):
     """
-    Add begin/end symbols to space-separated string.
+    Add begin/end delimiters to space-separated string.
     """
     if isinstance(word, _collection):
         return [add_delim(word_, edge, iostring) for word_ in word]
@@ -111,17 +111,17 @@ def remove_epsilon(word):
     return ret
 
 
-def remove_syms(word, syms=None, regexp=None, sep=' '):
+def remove_segs(word, segs=None, regexp=None, sep=' '):
     """
-    Remove designated symbols.
+    Remove designated segments.
     """
-    if syms is None and regexp is None:
+    if segs is None and regexp is None:
         return word
     if regexp is None:
-        regexp = '(' + '|'.join(syms) + ')'
+        regexp = '(' + '|'.join(segs) + ')'
 
     if isinstance(word, _collection):
-        return [remove(word_, syms, regexp, sep) for word_ in word]
+        return [remove(word_, segs, regexp, sep) for word_ in word]
 
     ret = re.sub(regexp, '', word)
     ret = squish(ret)
@@ -193,7 +193,7 @@ def str_subs(word, subs={}, sep=' '):
     substitutions to string(s).
     note: handles deterministic substitutions only.
     note: alternative to native str.maketrans / 
-    str.translate for space-separated symbol sequences.
+    str.translate for space-separated segment sequences.
     """
     if isinstance(word, _collection):
         return [str_subs(word_, subs, sep) for word_ in word]
@@ -242,26 +242,26 @@ digit2subscript = str.maketrans( \
 def add_indices(word, skip=[], sep=' '):
     """
     Add integer indices (numbered left-to-right)
-    to end of symbols in separated word(s).
+    to end of segments in separated word(s).
     """
     if isinstance(word, _collection):
         return [add_indices(word_, sep) for word_ in word]
-    syms = word.split(sep) if sep != '' else word
+    segs = word.split(sep) if sep != '' else word
     use_skip = (skip is not None and len(skip) > 0)
-    syms_idx, idx = [], 0
-    for sym in syms:
-        if use_skip and sym in skip:
-            syms_idx.append(sym)
+    segs_idx, idx = [], 0
+    for seg in segs:
+        if use_skip and seg in skip:
+            segs_idx.append(seg)
         else:
-            syms_idx.append(f'{sym}{as_index(idx)}')
+            segs_idx.append(f'{seg}{as_index(idx)}')
             idx += 1
-    ret = sep.join(syms_idx)
+    ret = sep.join(segs_idx)
     return ret
 
 
 def remove_indices(word, sep=' '):
     """
-    Remove integer indices from end of symbols in 
+    Remove integer indices from end of segments in 
     separated word(s).
     """
     if isinstance(word, _collection):
@@ -344,12 +344,12 @@ def unigrams(word, sep=' '):
     for word_ in word:
         ret.update(unigram_tokens(word_, sep))
     ret = pl.DataFrame({ \
-        'sym': ret.keys(),
+        'seg': ret.keys(),
         'freq': ret.values() })
     return ret
 
 
-get_symbols = unigrams  # Alias.
+get_segments = unigrams  # Alias.
 
 
 def bigram_tokens(word, sep=' '):
@@ -432,8 +432,8 @@ if __name__ == "__main__":
     print(phon_config.bos, phon_config.eos, phon_config.epsilon)
     print(phon_config.eos)
     print(squish(' t  e s  t   '))
-    print(str_sep('cheek', syms=['ch', 'ee', 'k']))
+    print(str_sep('cheek', segs=['ch', 'ee', 'k']))
     print(str_sep('cheek', regexp='(ch|ee|k)'))
     print(add_delim('test'))
-    print(remove_syms('testing', syms='aeiou'))
+    print(remove_segs('testing', segs='aeiou'))
     print(remove_punc('[(testing).!]?'))
