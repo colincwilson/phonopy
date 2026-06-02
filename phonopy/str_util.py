@@ -14,17 +14,17 @@ smart_punc = '“”‘’'
 punc = punc + smart_punc
 punc_regexp = r"[" + re.escape(punc) + r"]"
 
-_collection = (list, set, tuple)  # disjunctive type
+collection_types = (list, set, tuple)  # disjunctive type
 
 
-def squish(word):
+def str_squish(word):
     """
     Collapse consecutive space chars to single space,
     remove leading/trailing spaces.
     see: https://stringr.tidyverse.org/reference/str_trim.html
     """
-    if isinstance(word, _collection):
-        return [squish(word_) for word_ in word]
+    if isinstance(word, collection_types):
+        return [str_squish(word_) for word_ in word]
     ret = re.sub(r'\s+', ' ', word)
     ret = ret.strip()
     return ret
@@ -42,11 +42,11 @@ def str_sep(word, segs=None, regexp=None):
         segs.sort(key=lambda x: len(x), reverse=True)
         regexp = '(' + '|'.join(segs) + ')'
 
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [str_sep(word_, segs, regexp) for word_ in word]
 
     ret = re.sub(regexp, "\\1 ", word)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -54,7 +54,7 @@ def add_delim(word, edge='both', iostring=False):
     """
     Add begin/end delimiters to space-separated string.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [add_delim(word_, edge, iostring) for word_ in word]
     bos = phon_config.bos
     eos = phon_config.eos
@@ -77,7 +77,7 @@ def remove_delim(word):
     """
     Remove begin/end delimiters.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [remove_delim(word_) for word_ in word]
     bos = phon_config.bos
     eos = phon_config.eos
@@ -88,7 +88,7 @@ def remove_delim(word):
     # Remove from istring or ostring.
     ret = re.sub(f'{bos}', '', ret)
     ret = re.sub(f'{eos}', '', ret)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -99,7 +99,7 @@ def remove_epsilon(word):
     """
     Remove epsilons.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [remove_epsilon(word_) for word_ in word]
     epsilon = phon_config.epsilon
     ret = word
@@ -107,7 +107,7 @@ def remove_epsilon(word):
     ret = re.sub(f'{epsilon}:{epsilon}', '', ret)
     # Remove from istring or ostring.
     ret = re.sub(f'{epsilon}', '', ret)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -120,11 +120,11 @@ def remove_segs(word, segs=None, regexp=None, sep=' '):
     if regexp is None:
         regexp = '(' + '|'.join(segs) + ')'
 
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [remove(word_, segs, regexp, sep) for word_ in word]
 
     ret = re.sub(regexp, '', word)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -133,10 +133,10 @@ def remove_punc(word):
     Remove punctuation from word.
     todo: sep argument
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [remove_punc(word_) for word_ in word]
     ret = re.sub(punc_regexp, '', word)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -144,7 +144,7 @@ def str_pad(word, n=1, sep=' ', pad=None, edge='end'):
     """
     Pad string up to length n at designated edge.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [str_pad(word_, n, sep, pad, edge) for word_ in word]
     if word is None:
         word = ''
@@ -165,7 +165,7 @@ def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
     """
     Pad input/output strings to same length.
     """
-    if isinstance(input_, _collection):
+    if isinstance(input_, collection_types):
         if output_:
             pairs = zip(input_, output_)
         else:
@@ -195,14 +195,14 @@ def str_subs(word, subs={}, sep=' '):
     note: alternative to native str.maketrans / 
     str.translate for space-separated segment sequences.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         return [str_subs(word_, subs, sep) for word_ in word]
     sep_flag = (sep is not None and sep != '')
     ret = word.split(sep) if sep_flag else word
     for s, r in subs.items():
         ret = [subs[x] if x in subs else x for x in ret]
     ret = sep.join(ret) if sep_flag else ''.join(ret)
-    ret = squish(ret)
+    ret = str_squish(ret)
     return ret
 
 
@@ -215,14 +215,14 @@ retranscribe = str_subs  # Alias.
 
 def combos(s):
     """
-    Convert common string representations of phonological sets
+    Convert string representations of phonological sets
     (e.g., set of acceptable onsets) to list of tuples.
     Ex. combos("(k|g) (r|l|w)") => [(k,r), (k,l), ... (g,w)])
     """
-    if isinstance(s, _collection):
+    if isinstance(s, collection_types):
         return [tuple(x.split(' ')) for x in s]
     parts = s.split(' ')
-    parts = [squish(re.sub("[()]", "", part)) for part in parts]
+    parts = [str_squish(re.sub("[()]", "", part)) for part in parts]
     parts = [part.split("|") for part in parts]
     ret = itertools.product(*parts)
     ret = map(lambda x: tuple(x), ret)
@@ -239,39 +239,47 @@ digit2subscript = str.maketrans( \
     digits, subscript_digits)
 
 
-def add_indices(word, skip=[], sep=' '):
+def str_index(word, skip=[], sep=' ', subscript=True):
     """
     Add integer indices (numbered left-to-right)
     to end of segments in separated word(s).
     """
-    if isinstance(word, _collection):
-        return [add_indices(word_, sep) for word_ in word]
+    if isinstance(word, collection_types):
+        ret = [str_index(word_, skip, sep, subscript) for word_ in word]
+        return ret
     segs = word.split(sep) if sep != '' else word
     use_skip = (skip is not None and len(skip) > 0)
     segs_idx, idx = [], 0
     for seg in segs:
         if use_skip and seg in skip:
             segs_idx.append(seg)
+            continue
+        if subscript:
+            segs_idx.append(f'{seg}{to_subscript(idx)}')
         else:
-            segs_idx.append(f'{seg}{as_index(idx)}')
-            idx += 1
+            segs_idx.append(f'{seg}_{idx}')
+        idx += 1
     ret = sep.join(segs_idx)
     return ret
 
 
-def remove_indices(word, sep=' '):
+def str_deindex(word, sep=' ', subscript=True):
     """
     Remove integer indices from end of segments in 
     separated word(s).
     """
-    if isinstance(word, _collection):
-        return [remove_indices(word_, sep) for word_ in word]
-    ret = re.sub(f'[{subscript_digits}]+({sep}|$)', sep, word)
-    ret = squish(ret)
+    if isinstance(word, collection_types):
+        ret = [str_deindex(word_, sep) for word_ in word]
+        return ret
+    if subscript:
+        ret = re.sub(f'[{subscript_digits}]+({sep}|$)', sep, word)
+    else:
+        ret = re.sub(f'_[{digits}]+({sep}|$)', sep, word)
+    ret = str_squish(ret)
     return ret
 
 
-def as_index(idx):
+def to_subscript(idx):
     """ Convert integer to subscript index. """
     idx = str(idx)
     # if not re.search(f'^[{digits}]+$', idx):
@@ -279,8 +287,6 @@ def as_index(idx):
     ret = idx.translate(digit2subscript)
     return ret
 
-
-to_index = as_index  # Alias.
 
 # def retranscribe_sep(x, subs, sep=' '):
 #     """
@@ -320,7 +326,7 @@ def unigram_tokens(word, sep=' '):
     """
     Get unigram tokens from word(s).
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         toks = []
         for word_ in word:
             toks += unigram_tokens(word_, sep)
@@ -356,7 +362,7 @@ def bigram_tokens(word, sep=' '):
     """
     Get bigram tokens from one word.
     """
-    if isinstance(word, _collection):
+    if isinstance(word, collection_types):
         toks = []
         for word_ in word:
             toks += bigram_tokens(word_, sep)
@@ -431,7 +437,7 @@ def lcp(x, y, prefix=True):
 if __name__ == "__main__":
     print(phon_config.bos, phon_config.eos, phon_config.epsilon)
     print(phon_config.eos)
-    print(squish(' t  e s  t   '))
+    print(str_squish(' t  e s  t   '))
     print(str_sep('cheek', segs=['ch', 'ee', 'k']))
     print(str_sep('cheek', regexp='(ch|ee|k)'))
     print(add_delim('test'))
