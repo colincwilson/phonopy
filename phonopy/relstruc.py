@@ -130,8 +130,7 @@ def draw_layered_graph(
 ):
     """
     Layout graph in GraphViz/dot format, arranging vertices
-    in rows by 'type' attribute.
-    orig version: CoPilot (GPT-4.1)
+    in rows by 'type' attribute. [original Copilot (GPT-4.1)]
     todo: color labels
     """
     # Group vertices by type

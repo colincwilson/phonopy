@@ -366,12 +366,12 @@ def get_features(fm, x, keep_zero=True):
         return empty
     # Single segment.
     if isinstance(x, str):
-        ret = fm.sym2ftrs.get(x, empty).items()
+        ret = fm.seg2ftrs.get(x, empty).items()
     # Collection of segments.
     else:
         ret = None
         for xi in x:
-            ftrsi = fm.sym2ftrs.get(xi, empty)
+            ftrsi = fm.seg2ftrs.get(xi, empty)
             if ret is None:
                 ret = ftrsi.items()
             else:
@@ -439,10 +439,10 @@ def natural_class(fm, ftrs=None, **kwargs):
             ftrs[key] = '-'
     # Natural class determined by subsumption.
     if not ftrs:
-        ret = set([x for x in fm.symbols if x != phon_config.epsilon])
+        ret = set([x for x in fm.segments if x != phon_config.epsilon])
     else:
         ret = set([
-            x for x, ftrs_x in fm.sym2ftrs.items()
+            x for x, ftrs_x in fm.seg2ftrs.items()
             if subsumes(ftrs, ftrs_x) and x != phon_config.epsilon
         ])
     return ret
