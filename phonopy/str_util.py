@@ -331,7 +331,7 @@ def unigram_tokens(word, sep=' '):
     """
     Get unigram tokens from word(s).
     """
-    if words is None:
+    if word is None:
         return []
     if isinstance(word, collection_types):
         toks = []
