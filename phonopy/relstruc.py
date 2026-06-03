@@ -163,7 +163,7 @@ def draw_layered_graph(
     lines.append('}')
     ret = '\n'.join(lines)
 
-    # Write to file.
+    # Write to file and convert to pdf.
     if source:
         with open(source, 'w') as f:
             f.write(ret)
