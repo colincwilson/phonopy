@@ -255,7 +255,7 @@ def str_index(word, skip=[], sep=' ', subscript=True):
             segs_idx.append(seg)
             continue
         if subscript:
-            segs_idx.append(f'{seg}{to_subscript(idx)}')
+            segs_idx.append(f'{seg}{as_index(idx)}')
         else:
             segs_idx.append(f'{seg}_{idx}')
         idx += 1
@@ -279,14 +279,19 @@ def str_deindex(word, sep=' ', subscript=True):
     return ret
 
 
-def to_subscript(idx):
+def to_index(idx, subscript=True):
     """ Convert integer to subscript index. """
     idx = str(idx)
+    if not subscript:
+        return idx
     # if not re.search(f'^[{digits}]+$', idx):
     #     return None
     ret = idx.translate(digit2subscript)
     return ret
 
+
+# Alias.
+as_index = to_index
 
 # def retranscribe_sep(x, subs, sep=' '):
 #     """
