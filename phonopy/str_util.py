@@ -331,6 +331,8 @@ def unigram_tokens(word, sep=' '):
     """
     Get unigram tokens from word(s).
     """
+    if words is None:
+        return []
     if isinstance(word, collection_types):
         toks = []
         for word_ in word:
@@ -342,7 +344,7 @@ def unigram_tokens(word, sep=' '):
         else:
             toks = list(word)
     except Exception as e:
-        print(f'Error in unigram_tokens: {e} on word {word}')
+        #print(f'Error in unigram_tokens: {e} on word {word}')
         toks = []
     return toks
 
@@ -371,6 +373,8 @@ def bigram_tokens(word, sep=' '):
     """
     Get bigram tokens from one word.
     """
+    if word is None:
+        return []
     if isinstance(word, collection_types):
         toks = []
         for word_ in word:
@@ -404,7 +408,7 @@ def gram_tokens(word, k=1, sep=' '):
         return unigram_tokens(word, sep)
     if k == 2:
         return bigram_tokens(word, sep)
-    print('gram_tokens not yet implemented for k>2')
+    print('gram_tokens() not yet implemented for k > 2')
     return None
 
 
