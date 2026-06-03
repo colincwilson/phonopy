@@ -336,10 +336,14 @@ def unigram_tokens(word, sep=' '):
         for word_ in word:
             toks += unigram_tokens(word_, sep)
         return toks
-    if sep is not None and sep != '':
-        toks = word.split(sep)
-    else:
-        toks = list(word)
+    try:
+        if sep is not None and sep != '':
+            toks = word.split(sep)
+        else:
+            toks = list(word)
+    except Exception as e:
+        print(f'Error in unigram_tokens: {e} on word {word}')
+        toks = []
     return toks
 
 
