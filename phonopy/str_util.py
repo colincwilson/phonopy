@@ -274,10 +274,12 @@ def str_deindex(word, sep=' ', subscript=True):
         ret = [str_deindex(word_, sep) for word_ in word]
         return ret
     if subscript:
-        ret = re.sub(f'[{subscript_digits}]+({sep}|$)', sep, word)
+        ret = re.sub(f'[{subscript_digits}]+{succ}', succ, ret)
+        ret = re.sub(f'[{subscript_digits}]+$', '', ret)
     else:
-        ret = re.sub(f'_[{digits}]+({sep}|$)', sep, word)
-    ret = str_squish(ret)
+        ret = re.sub(f'_[{digits}]+{sep}', sep, word)
+        ret = re.sub(f'_[{digits}]+$', '', ret)
+    #ret = str_squish(ret)
     return ret
 
 
