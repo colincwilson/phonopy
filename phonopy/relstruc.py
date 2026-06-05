@@ -28,7 +28,7 @@ def get_attribute(G, v, key):
 
 def get_neighbors(G, v, mode='all', pattern=None, strict=True):
     """
-    Get neighbors of vertex v as vertices (not ids),
+    Get immediate neighbors of vertex v as vertices (not ids),
     possibly restricted by mode or pattern.
     """
     ws = [G.vs[i] for i in G.neighbors(v, mode=mode)]
@@ -37,8 +37,20 @@ def get_neighbors(G, v, mode='all', pattern=None, strict=True):
     return ws
 
 
-# todo: get_successors
-# todo: get_predecessors
+def get_successors(G, v, pattern=None, strict=True):
+    """
+    Get immediate successors of vertex v as vertices (not ids),
+    possibly restricted by pattern.
+    """
+    return get_neighbors(G, v, mode='out', pattern=pattern, strict=strict)
+
+
+def get_predecessors(G, v, pattern=None, strict=True):
+    """
+    Get immediate predecessors of vertex v as vertices (not ids),
+    possibly restricted by pattern.
+    """
+    return get_neighbors(G, v, mode='in', pattern=pattern, strict=strict)
 
 
 def isa(G, v, pattern=None, strict=True):

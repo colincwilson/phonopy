@@ -12,7 +12,7 @@ from collections import Counter
 punc = string.punctuation
 smart_punc = '“”‘’'
 punc = punc + smart_punc
-punc_regexp = r"[" + re.escape(punc) + r"]"
+punc_regexp = r'[' + re.escape(punc) + r'']''
 
 collection_types = (list, set, tuple)  # disjunctive type
 
@@ -37,7 +37,7 @@ def str_sep(word, segs=None, regexp=None):
     # see: torchtext.data.functional.simple_space_split
     """
     if segs is None and regexp is None:
-        regexp = "(.)"
+        regexp = '(.)'
 
     if regexp is None:
         # Longer segments take priority.
@@ -47,7 +47,7 @@ def str_sep(word, segs=None, regexp=None):
     if isinstance(word, collection_types):
         return [str_sep(word_, segs, regexp) for word_ in word]
 
-    ret = re.sub(regexp, "\\1 ", word)
+    ret = re.sub(regexp, '\\1 ', word)
     ret = str_squish(ret)
     return ret
 
@@ -219,13 +219,13 @@ def combos(s):
     """
     Convert string representations of phonological sets
     (e.g., set of acceptable onsets) to list of tuples.
-    Ex. combos("(k|g) (r|l|w)") => [(k,r), (k,l), ... (g,w)])
+    Ex. combos('(k|g) (r|l|w)') => [(k,r), (k,l), ... (g,w)])
     """
     if isinstance(s, collection_types):
         return [tuple(x.split(' ')) for x in s]
     parts = s.split(' ')
-    parts = [str_squish(re.sub("[()]", "", part)) for part in parts]
-    parts = [part.split("|") for part in parts]
+    parts = [str_squish(re.sub('[()]', '', part)) for part in parts]
+    parts = [part.split('|') for part in parts]
     ret = itertools.product(*parts)
     ret = map(lambda x: tuple(x), ret)
     ret = list(dict.fromkeys(ret))
