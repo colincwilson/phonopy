@@ -26,10 +26,25 @@ def get_attribute(G, v, key):
     return get_attributes(G, v)[key]
 
 
+def get_neighbors(G, v, mode='all', pattern=None, strict=True):
+    """
+    Get neighbors of vertex v as vertices (not ids),
+    possibly restricted by mode or pattern.
+    """
+    ws = [G.vs[i] for i in G.neighbors(v, mode=mode)]
+    if pattern:
+        ws = [w for w in ws if isa(G, w, pattern, strict)]
+    return ws
+
+
+# todo: get_successors
+# todo: get_predecessors
+
+
 def isa(G, v, pattern=None, strict=True):
     """
     Test vertex v in graph G against {key_i: val_i} pattern
-    or list/tuple of patterns applied disjunctively.
+    or list/tuple of patterns applied _disjunctively_.
     """
     if G is None or v is None:
         return False

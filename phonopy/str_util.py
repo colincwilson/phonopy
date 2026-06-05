@@ -38,7 +38,9 @@ def str_sep(word, segs=None, regexp=None):
     """
     if segs is None and regexp is None:
         regexp = "(.)"
+
     if regexp is None:
+        # Longer segments take priority.
         segs.sort(key=lambda x: len(x), reverse=True)
         regexp = '(' + '|'.join(segs) + ')'
 
@@ -306,25 +308,7 @@ as_index = to_index
 #     return y
 
 # # # # # # # # # #
-# Word and substring frequencies.
-
-
-def get_words(text, sep=' '):
-    """
-    Get words types and type frequencies from text(s).
-    """
-    words = Counter()
-    if isinstance(text, pl.Series):
-        text = text.to_list()
-    elif isinstance(text, str):
-        text = [text]
-    for text_ in text:
-        words.update(text_.split(sep))
-    words = pl.DataFrame({ \
-        'word': words.keys(),
-        'freq': words.values() })
-    words = words.sort(by='freq', descending=True)
-    return words
+# Unigram/bigram frequencies.
 
 
 def unigram_tokens(word, sep=' '):
@@ -363,10 +347,20 @@ def unigrams(word, sep=' '):
     ret = pl.DataFrame({ \
         'seg': ret.keys(),
         'freq': ret.values() })
+    ret = ret.sort(by='freq', descending=True)
     return ret
 
 
 get_segments = unigrams  # Alias.
+
+
+def get_words(text, sep=' '):
+    """
+    Get words types and type frequencies from text(s).
+    """
+    ret = unigrams(text, sep)
+    ret = ret.rename({'seg': 'word'})
+    return ret
 
 
 def bigram_tokens(word, sep=' '):
@@ -400,6 +394,7 @@ def bigrams(word, sep=' '):
     ret = pl.DataFrame({ \
         'bigram': ret.keys(),
         'freq': ret.values() })
+    ret = ret.sort(by='freq', descending=True)
     return ret
 
 
