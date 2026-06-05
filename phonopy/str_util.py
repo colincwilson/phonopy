@@ -249,7 +249,9 @@ def str_index(word, skip=[], sep=' ', subscript=True):
     if isinstance(word, collection_types):
         ret = [str_index(word_, skip, sep, subscript) for word_ in word]
         return ret
+    # Split.
     segs = word.split(sep) if sep != '' else word
+    # Apply.
     use_skip = (skip is not None and len(skip) > 0)
     segs_idx, idx = [], 0
     for seg in segs:
@@ -261,6 +263,7 @@ def str_index(word, skip=[], sep=' ', subscript=True):
         else:
             segs_idx.append(f'{seg}_{idx}')
         idx += 1
+    # Combine.
     ret = sep.join(segs_idx)
     return ret
 
@@ -273,13 +276,15 @@ def str_deindex(word, sep=' ', subscript=True):
     if isinstance(word, collection_types):
         ret = [str_deindex(word_, sep) for word_ in word]
         return ret
+    # Split.
+    segs = word.split(sep) if sep != '' else word
+    # Apply.
     if subscript:
-        ret = re.sub(f'[{subscript_digits}]+{succ}', succ, ret)
-        ret = re.sub(f'[{subscript_digits}]+$', '', ret)
+        segs = [re.sub(f'[{subscript_digits}]+$', '', seg) for seg in segs]
     else:
-        ret = re.sub(f'_[{digits}]+{sep}', sep, word)
-        ret = re.sub(f'_[{digits}]+$', '', ret)
-    #ret = str_squish(ret)
+        segs = [re.sub(f'_[{digits}]+$', '', seg) for seg in segs]
+    # Combine.
+    ret = sep.join(segs)
     return ret
 
 
