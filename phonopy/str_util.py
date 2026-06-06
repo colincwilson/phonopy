@@ -12,7 +12,7 @@ from collections import Counter
 punc = string.punctuation
 smart_punc = '“”‘’'
 punc = punc + smart_punc
-punc_regexp = r'[' + re.escape(punc) + r'']''
+punc_regexp = r'[' + re.escape(punc) + r']'
 
 collection_types = (list, set, tuple)  # disjunctive type
 
