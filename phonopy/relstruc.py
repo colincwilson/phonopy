@@ -28,7 +28,7 @@ def get_attribute(G, v, key):
 
 def get_neighbors(G, v, mode='all', pattern=None, strict=True):
     """
-    Get immediate neighbors of vertex v as vertices (not ids),
+    Get immediate neighbors of vertex v as vertices (not vertex ids),
     possibly restricted by mode or pattern.
     """
     ws = [G.vs[i] for i in G.neighbors(v, mode=mode)]
@@ -39,7 +39,7 @@ def get_neighbors(G, v, mode='all', pattern=None, strict=True):
 
 def get_successors(G, v, pattern=None, strict=True):
     """
-    Get immediate successors of vertex v as vertices (not ids),
+    Get immediate successors of vertex v as vertices (not vertex ids),
     possibly restricted by pattern.
     """
     return get_neighbors(G, v, mode='out', pattern=pattern, strict=strict)
@@ -47,7 +47,7 @@ def get_successors(G, v, pattern=None, strict=True):
 
 def get_predecessors(G, v, pattern=None, strict=True):
     """
-    Get immediate predecessors of vertex v as vertices (not ids),
+    Get immediate predecessors of vertex v as vertices (not vertex ids),
     possibly restricted by pattern.
     """
     return get_neighbors(G, v, mode='in', pattern=pattern, strict=strict)
@@ -95,7 +95,7 @@ def sat(G, v=None, phi=None):
     (phi represented by a function G,v -> boolean):
         if v is given, returns true iff G ⊨ phi[v]
         else returns all v in dom(G) s.t. G ⊨ phi[v].
-    See e.g. Enderton 2001:83 on first-order satisfaction.
+    See (e.g.) Enderton 2001:83 on first-order satisfaction.
     """
     if phi is None:
         return True
@@ -126,7 +126,7 @@ def tree_to_graph(tree):
     """
     Convert tree to graph.
     Returns: igraph.Graph, root node index
-    orig version: CoPilot (GPT-4.1)
+    [original version CoPilot (GPT-4.1)]
     """
     graph = igraph.Graph(directed=True)
     node_ids = {}
@@ -157,7 +157,7 @@ def draw_layered_graph(
 ):
     """
     Layout graph in GraphViz/dot format, arranging vertices
-    in rows by 'type' attribute. [original Copilot (GPT-4.1)]
+    in rows by 'type' attribute. [original CoPilot (GPT-4.1)]
     todo: color labels
     """
     # Group vertices by type
