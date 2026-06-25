@@ -72,7 +72,7 @@ def add_delim(word, edge='both', iostring=False):
     return ret
 
 
-delim = add_delim  # Alias.
+str_delim = delim = add_delim  # Alias.
 
 
 def remove_delim(word):
@@ -94,7 +94,7 @@ def remove_delim(word):
     return ret
 
 
-undelim = remove_delim  # Alias.
+str_undelim = undelim = remove_delim  # Alias.
 
 
 def remove_epsilon(word):
@@ -268,6 +268,17 @@ def str_index(word, skip=[], sep=' ', subscript=True):
     return ret
 
 
+def seg_index(seg, idx, subscript=True):
+    """
+    Add integer index to a single segment.
+    """
+    if subscript:
+        ret = f'{seg}{as_index(idx)}'
+    else:
+        ret = f'{seg}_{idx}'
+    return ret
+
+
 def str_deindex(word, sep=' ', subscript=True):
     """
     Remove integer indices from end of segments in 
@@ -285,6 +296,17 @@ def str_deindex(word, sep=' ', subscript=True):
         segs = [re.sub(f'_[{digits}]+$', '', seg) for seg in segs]
     # Combine.
     ret = sep.join(segs)
+    return ret
+
+
+def seg_deindex(seg, subscript=True):
+    """
+    Remove integer index from a single segment.
+    """
+    if subscript:
+        ret = re.sub(f'[{subscript_digits}]+$', '', seg)
+    else:
+        ret = re.sub(f'_[{digits}]+$', '', seg)
     return ret
 
 
