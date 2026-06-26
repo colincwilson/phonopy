@@ -4,6 +4,35 @@ import os, re, sys
 import igraph
 from nltk.tree import *
 
+
+# # # # # # # # # #
+# Example graph with attributes.
+def example_graph():
+    G = igraph.Graph(directed=True)
+    G.add_vertices(7)
+    G.vs[0]['name'] = G.vs[0]['label'] = 'syll1'
+    G.vs[0]['typ'] = 'SYLL'
+    G.vs[1]['name'] = G.vs[1]['label'] = 'onset1'
+    G.vs[1]['typ'] = 'ONSET'
+    G.vs[2]['name'] = G.vs[2]['label'] = 'nucleus1'
+    G.vs[2]['typ'] = 'NUCLEUS'
+    G.vs[3]['name'] = G.vs[3]['label'] = 'coda1'
+    G.vs[3]['typ'] = 'CODA'
+    G.vs[4]['name'] = G.vs[4]['label'] = 'g'
+    G.vs[4]['typ'] = 'SEG'
+    G.vs[5]['name'] = G.vs[5]['label'] = 'o'
+    G.vs[5]['typ'] = 'SEG'
+    G.vs[6]['name'] = G.vs[6]['label'] = 't'
+    G.vs[6]['typ'] = 'SEG'
+    G.add_edge(0, 1, typ='syll_part')
+    G.add_edge(0, 2, typ='syll_part')
+    G.add_edge(0, 3, typ='syll_part')
+    G.add_edge(1, 4, typ='part_seg')
+    G.add_edge(2, 5, typ='part_seg')
+    G.add_edge(3, 6, typ='part_seg')
+    return G
+
+
 # # # # # # # # # #
 # Queries on structures/graphs.
 
