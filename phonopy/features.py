@@ -66,8 +66,8 @@ class FeatureMatrix():
         ftr_matrix_vec = ftr_matrix.copy().replace(ftr_vals)
         ftr_matrix_vec = ftr_matrix_vec.to_numpy(dtype=float)
         # for (key, val) in ftr_specs.items():
-        #     ftr_matrix_vec = ftr_matrix_vec.replace( \
-        #         to_replace=key, value=val).astype(float)
+        #     ftr_matrix_vec = ftr_matrix_vec \
+        #          .replace(to_replace=key, value=val).astype(float)
         # ftr_matrix_vec = np.array(ftr_matrix_vec.values)
         return ftr_matrix_vec
 
@@ -77,6 +77,9 @@ class FeatureMatrix():
 
     def get_change(self, ftrs_x, ftrs_y, **kwargs):
         return get_change(self, ftrs_x, ftrs_y, **kwargs)
+
+    def change_segments(self, segments_x, ftrs_y, **kwargs):
+        return change_segments(self, segments_x, ftrs_y, **kwargs)
 
     def subsumes(self, ftrs1, ftrs2, **kwargs):
         return subsumes(ftrs1, ftrs2, **kwargs)
@@ -157,7 +160,7 @@ def read_features(feature_file=default_feature_file,
         ("\u0303", ('nasal', '+')),
         ("[ˀ]", ('constr.gl', '+')),
     ]
-    diacritic_segs = []
+    diacritic_segments = []
     if segments is not None:
         # Standardize segments.
         segments = standardize_segments(segments)
@@ -183,14 +186,15 @@ def read_features(feature_file=default_feature_file,
             for ftr, val in diacritic_ftrs:
                 idx = features_all.index(ftr)
                 base_ftr[idx] = val
-            diacritic_segs.append((seg, base_ftr))
+            diacritic_segments.append((seg, base_ftr))
 
         # Add segments with diacritics and features.
-        if len(diacritic_segs) > 0:
-            new_segs = [x[0] for x in diacritic_segs]
-            new_ftr_vecs = pd.DataFrame([ftr for (seg, ftr) in diacritic_segs])
+        if len(diacritic_segments) > 0:
+            new_segments = [x[0] for x in diacritic_segments]
+            new_ftr_vecs = pd.DataFrame(
+                [ftr for (seg, ftr) in diacritic_segments])
             new_ftr_vecs.columns = ftr_matrix.columns
-            segments_all += new_segs
+            segments_all += new_segments
             ftr_matrix = pd.concat([ftr_matrix, new_ftr_vecs],
                                    ignore_index=True)
         #print(segments_all)
@@ -346,27 +350,34 @@ def standardize_matrix(fm):
 # Natural classes and feature logic.
 
 
-def get_features(fm, segment, keep_zero=True):
+def get_features(fm, seg, keep_zero=True):
     """
-    Return feature values of one segment, or feature
-    values shared by a collection of segments.
+    Return dict of feature values for one segment, or 
+    feature values shared by a collection of segments.
+    note: accepts feature-value strings in place of segments
     """
     empty = dict()
     # None / empty string / empty collection.
-    if not segment:  #
+    if not seg:
         return empty
     # Single segment.
-    if isinstance(segment, str):
-        ret = fm.seg2ftrs.get(segment, empty).items()
+    if isinstance(seg, str):
+        seg = re.sub(r'\s+', '', seg)
+        if re.search(r'^\[.+\]$', seg):
+            ret = str2ftrs(fm, seg)[0]
+        else:
+            ret = fm.seg2ftrs.get(seg, empty)
+        return ret
+
     # Collection of segments.
-    else:
-        ret = None
-        for segmenti in segment:
-            ftrsi = fm.seg2ftrs.get(segmenti, empty)
-            if ret is None:
-                ret = ftrsi.items()
-            else:
-                ret = ret & ftrsi.items()
+    ret = None
+    for seg1 in seg:
+        ftrs1 = get_features(fm, seg1, keep_zero=keep_zero)
+        if ret is None:
+            ret = set(ftrs1.items())
+        else:
+            ret = ret & set(ftrs1.items())
+
     # Optionally remove zero-valued features.
     if not keep_zero:
         ret = [(ftr, val) for (ftr,val) in ret \
@@ -380,23 +391,15 @@ def get_change(fm, ftrs_x, ftrs_y):
     Return (features of y) - (features of x).
     todo: ignore unspecified features?
     """
-    # Handle segment or feature-value string.
+    # Get input features from one feature-value string or segment.
     if isinstance(ftrs_x, str):
-        ftrs_x = re.sub(r'\s+', '', ftrs_x)
-        if re.search(r'^\[.+\]$', ftrs_x):
-            ftrs_x = str2ftrs(fm, ftrs_x)[0]
-        else:
-            ftrs_x = get_features(fm, ftrs_x)
+        ftrs_x = get_features(fm, ftrs_x)
 
-    # Handle segment or feature-value string.
+    # Get output features from one feature-value string or segment.
     if isinstance(ftrs_y, str):
-        ftrs_y = re.sub(r'\s+', '', ftrs_y)
-        if re.search(r'^\[.+\]$', ftrs_y):
-            ftrs_y = str2ftrs(fm, ftrs_y)[0]
-        else:
-            ftrs_y = get_features(fm, ftrs_y)
+        ftrs_y = get_features(fm, ftrs_y)
 
-    # Get different feature values.
+    # Get input -> output feature change.
     ret = {}
     for ftr in fm.features:
         val = ftrs_y.get(ftr, '0')
@@ -405,10 +408,33 @@ def get_change(fm, ftrs_x, ftrs_y):
     return ret
 
 
+def change_segments(fm, segs_x, ftrs_y):
+    """
+    Return segments modified by designated features.
+    """
+    # Get output features from one feature-value string or segment.
+    if isinstance(ftrs_y, str):
+        ftrs_y = re.sub(r'\s+', '', ftrs_y)
+        if re.search(r'^\[.+\]$', ftrs_y):
+            ftrs_y = str2ftrs(fm, ftrs_y)[0]
+        else:
+            ftrs_y = get_features(fm, ftrs_y)
+
+    # Get output segments that result from change.
+    segs_y = []
+    for seg_x in segs_x:
+        ftrs_x = get_features(fm, seg_x)
+        ftrs_xy = ftrs_x.copy()
+        ftrs_xy.update(ftrs_y)
+        segs_y += natural_class(fm, ftrs_xy)
+    return segs_y
+
+
 def subsumes(ftrs1, ftrs2):
     """
     Feature-value dict ftrs1 subsumes ftrs2 iff every
-    non-zero feature value in ftrs1 is also in ftrs2.
+    non-zero feature value in ftrs1 is also in ftrs2
+    (e.g., vehicle subsumes bicycle, plane, truck, ...).
     """
     for ftr, val in ftrs1.items():
         if is_zero(val):
@@ -518,7 +544,7 @@ def to_regexp(fm, pattern, segments=None):
     # Convert feature-matrix string to features.
     if isinstance(pattern, str):
         pattern = str2ftrs(fm, pattern)
-    # Promote singleton segs arg to list.
+    # Promote singleton pattern to list.
     if not isinstance(pattern, (list, tuple)):
         pattern = [pattern]
     # Create regexp.
