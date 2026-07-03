@@ -473,9 +473,10 @@ def str2ftrs(fm, ftrs):
     Convert feature-matrix string to feature-value dict.
     note: '[]' is interpreted as [+seg(ment)].
     """
-    ftrs = re.sub(r'\s+', '', ftrs)
-    ftrs = re.sub(r'\[', '', ftrs)
-    ftrs = ftrs.split(r']')[:-1]
+    ftrs = re.sub(r'[−]', '-', ftrs)  # Convert minus signs to dashes.
+    ftrs = re.sub(r'\s+', '', ftrs)  # Delete all whitespace.
+    ftrs = re.sub(r'\[', '', ftrs)  # Delete opening brackets.
+    ftrs = ftrs.split(r']')[:-1]  # Split on closing brackets, discard empty.
     ret = []
     for ftrs1 in ftrs:
         if ftrs1 == '':
