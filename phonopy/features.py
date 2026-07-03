@@ -81,11 +81,11 @@ class FeatureMatrix():
     def subsumes(self, ftrs1, ftrs2, **kwargs):
         return subsumes(ftrs1, ftrs2, **kwargs)
 
-    def natural_class(self, ftrs=None, **kwargs):
-        return natural_class(self, ftrs, **kwargs)
+    def natural_class(self, ftrs=None, segments=None, **kwargs):
+        return natural_class(self, ftrs, segments, **kwargs)
 
-    def to_regexp(self, ftrs, **kwargs):
-        return to_regexp(self, ftrs, **kwargs)
+    def to_regexp(self, ftrs, segments=None, **kwargs):
+        return to_regexp(self, ftrs, segments, **kwargs)
 
 
 def read_features(feature_file=default_feature_file,
@@ -268,7 +268,7 @@ def one_hot_features(segments=None,
 
 def default_features(**kwargs):
     """ Default features and segments for quick start. """
-    fm = import_features( \
+    fm = read_features( \
         default_feature_file, default_segments, **kwargs)
     return fm
 
@@ -418,18 +418,30 @@ def subsumes(ftrs1, ftrs2):
 
 def natural_class(fm, ftrs=None, segments=None, **kwargs):
     """
-    Return natural class (set of symbols)
-    defined by feature-value dict ftrs.
+    Return natural class (set of symbols) defined by
+    ftrs (feature-value dict or string or kwargs).
     """
+    # Handle sequence of feature matrices.
+    if isinstance(ftrs, (list, tuple)):
+        ret = [natural_class(fm, ftrs1, segments) for ftrs1 in ftrs]
+        if len(ret) == 1:
+            ret = ret[0]
+        return ret
+
     # Handle feature-matrix string.
     if isinstance(ftrs, str):
         ftrs = str2ftrs(fm, ftrs)  # from_str
-        return [natural_class(fm, ftrs1) for ftrs1 in ftrs]
+        ret = [natural_class(fm, ftrs1, segments) for ftrs1 in ftrs]
+        if len(ret) == 1:
+            ret = ret[0]
+        return ret
+
     # Handle feature-value dict and keyword args.
     if not ftrs:
         ftrs = dict()
     for (key, val) in kwargs.items():
         ftrs[key] = val
+
     # Handle numeric/verbose feature vals.
     for key in ftrs:
         val = ftrs[key]
@@ -437,10 +449,13 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
             ftrs[key] = '+'
         elif (val == -1 or val == '-1'):
             ftrs[key] = '-'
-    # Natural class determined by subsumption.
+
+    # Natural class as determined by subsumption.
     if not ftrs:
+        # All non-epsilon symbols if ftrs is empty / null.
         ret = set([x for x in fm.segments if x != phon_config.epsilon])
     else:
+        # Subset of segments in feature matrix by subsumption.
         ret = set([
             x for x, ftrs_x in fm.seg2ftrs.items()
             if subsumes(ftrs, ftrs_x) and x != phon_config.epsilon
@@ -453,7 +468,7 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
     return ret
 
 
-def from_str(fm, ftrs):
+def str2ftrs(fm, ftrs):
     """
     Convert feature-matrix string to feature-value dict.
     note: '[]' is interpreted as [+seg(ment)].
@@ -471,7 +486,7 @@ def from_str(fm, ftrs):
     return ret
 
 
-def to_str(fm, ftrs):
+def ftrs2str(fm, ftrs):
     """
     Convert sequence of feature-value dicts to
     feature-matrix string.
@@ -517,13 +532,14 @@ def to_regexp(fm, pattern, segments=None):
 
 
 def is_zero(val):
+    """ Is feature unspecified? """
     ret = (val == '0') or (val == 0) or (val is None)
     return ret
 
 
-# Alias.
-str2ftrs = from_str
-ftrs2str = to_str
+# Alias. [todo: deprecate]
+from_str = str2ftrs
+to_str = ftrs2str
 
 # # # # # # # # # #
 
