@@ -373,6 +373,7 @@ def to_index(idx, subscript=True):
 
 
 # Alias.
+ignore_indices = str_deindex
 as_index = to_index
 
 # def retranscribe_sep(x, subs, sep=' '):
