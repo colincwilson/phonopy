@@ -27,7 +27,7 @@ default_segments = [
 class FeatureMatrix():
     """ Container for matrix of phonological features. """
 
-    # todo: delegate to panphon or phoible if possible
+    # todo: delegate to panphon or phoible when possible
     # todo: warn about missing/nan feature values in matrix
     # see related: torchtext.vocab.Vocab
 
@@ -88,11 +88,11 @@ class FeatureMatrix():
         return to_regexp(self, ftrs, **kwargs)
 
 
-def import_features(feature_file=default_feature_file,
-                    segments=None,
-                    standardize=True,
-                    save_file=None,
-                    verbose=True):
+def read_features(feature_file=default_feature_file,
+                  segments=None,
+                  standardize=True,
+                  save_file=None,
+                  verbose=True):
     """
     Read feature matrix from file with segments in first *column*. 
     If segments is specified, eliminates constant and redundant features. 
@@ -234,7 +234,7 @@ def import_features(feature_file=default_feature_file,
     return fm
 
 
-read_features = import_features  # Alias.
+import_features = read_features  # Alias.
 
 
 def one_hot_features(segments=None,
