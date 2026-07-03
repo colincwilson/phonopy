@@ -416,14 +416,14 @@ def subsumes(ftrs1, ftrs2):
     return True
 
 
-def natural_class(fm, ftrs=None, **kwargs):
+def natural_class(fm, ftrs=None, segments=None, **kwargs):
     """
-    Return natural class (= set of symbols)
+    Return natural class (set of symbols)
     defined by feature-value dict ftrs.
     """
     # Handle feature-matrix string.
     if isinstance(ftrs, str):
-        ftrs = from_str(fm, ftrs)
+        ftrs = str2ftrs(fm, ftrs)  # from_str
         return [natural_class(fm, ftrs1) for ftrs1 in ftrs]
     # Handle feature-value dict and keyword args.
     if not ftrs:
@@ -445,6 +445,11 @@ def natural_class(fm, ftrs=None, **kwargs):
             x for x, ftrs_x in fm.seg2ftrs.items()
             if subsumes(ftrs, ftrs_x) and x != phon_config.epsilon
         ])
+
+    # Intersect with segments arg if specified.
+    if segments is not None:
+        ret = ret & set(segments)
+
     return ret
 
 
@@ -485,26 +490,29 @@ def to_str(fm, ftrs):
     return ''.join(ret)
 
 
-def to_regexp(fm, segs):
+def to_regexp(fm, pattern, segments=None):
     """
-    Convert sequence of natural classes (segment sets) or
-    feature-value dicts or a feature-matrix string to regexp.
+    Convert sequence of natural classes (segment sets), or
+    feature-value dicts, or feature-matrix strings to regexp.
     note: '[]' is interpreted as [+seg(ment)].
     """
     # Convert feature-matrix string to features.
-    if isinstance(segs, str):
-        segs = from_str(fm, segs)
+    if isinstance(pattern, str):
+        pattern = str2ftrs(fm, pattern)
     # Promote singleton segs arg to list.
-    if not isinstance(segs, (list, tuple)):
-        segs = [segs]
+    if not isinstance(pattern, (list, tuple)):
+        pattern = [pattern]
     # Create regexp.
     ret = []
-    for segs1 in segs:
-        if isinstance(segs1, dict):
-            segs1 = natural_class(fm, segs1)
-        segs1 = list(segs1)
-        segs1.sort(key=lambda x: fm.segments.index(x))
-        ret.append('(' + '|'.join(segs1) + ')')
+    for pattern1 in pattern:
+        if isinstance(pattern1, dict):
+            pattern1 = natural_class(fm, pattern1)
+        pattern1 = list(pattern1)
+        if segments is not None:
+            pattern1 = [x for x in pattern1 if x in segments]
+        pattern1.sort(key=lambda x: fm.segments.index(x))
+        ret.append('(' + '|'.join(pattern1) + ')')
+
     return ''.join(ret)
 
 
@@ -512,6 +520,10 @@ def is_zero(val):
     ret = (val == '0') or (val == 0) or (val is None)
     return ret
 
+
+# Alias.
+str2ftrs = from_str
+ftrs2str = to_str
 
 # # # # # # # # # #
 
@@ -536,7 +548,7 @@ if __name__ == "__main__":
     print(fm.natural_class(result))
 
     ftrs = get_features(fm, ['i', 'e', 'a', 'o', 'u'])
-    ftrs_str = to_str(fm, ftrs)
+    ftrs_str = ftrs2str(fm, ftrs)  # to_str
     print(ftrs_str)
 
 # # # # # # # # # #
