@@ -8,9 +8,9 @@ import pandas as pd  # todo: replace with polars
 #import polars as pl
 import numpy as np
 from collections import namedtuple
-#from unicodedata import normalize
 
 from phonopy import config as phon_config
+from phonopy.str_util import standardize_segments
 
 default_feature_file = Path.home() / \
     'Code/Python/phonopy/extern/hayes_features.csv'
@@ -72,11 +72,11 @@ class FeatureMatrix():
         return ftr_matrix_vec
 
     # Methods defined outside of class.
-    def get_features(self, x, **kwargs):
-        return get_features(self, x, **kwargs)
+    def get_features(self, segment, **kwargs):
+        return get_features(self, segment, **kwargs)
 
-    def get_change(self, x, y, **kwargs):
-        return get_change(self, x, y, **kwargs)
+    def get_change(self, ftrs_x, ftrs_y, **kwargs):
+        return get_change(self, ftrs_x, ftrs_y, **kwargs)
 
     def subsumes(self, ftrs1, ftrs2, **kwargs):
         return subsumes(ftrs1, ftrs2, **kwargs)
@@ -138,11 +138,13 @@ def read_features(feature_file=default_feature_file,
     ftr_matrix = ftr_matrix.iloc[:, 1:]
 
     # Standardize all segments.
-    segments_all = [standardize_segment(x) for x in segments_all]
+    segments_all = standardize_segments(segments_all)
     #print('segments_all:', segments_all)
 
     # Handle segments with diacritics. [partial]
     # (feature names from Hayes matrix)
+    # todo: split into separate function that maps
+    # segments with diacritics to base segments and features.
     diacritics = [ \
         ("[ˈ]", ('stress', '+')),
         ("[ʲ]", ('high', '+')),  # fixme: palatalization
@@ -153,11 +155,12 @@ def read_features(feature_file=default_feature_file,
         ("[ʷ]", ('round', '+')),
         ("[˞]", ('rhotic', '+')),
         ("\u0303", ('nasal', '+')),
+        ("[ˀ]", ('constr.gl', '+')),
     ]
     diacritic_segs = []
     if segments is not None:
         # Standardize segments.
-        segments = [standardize_segment(seg) for seg in segments]
+        segments = standardize_segments(segments)
         for seg in segments:
             # Detect and strip diacritics.
             base_seg = seg
@@ -181,6 +184,7 @@ def read_features(feature_file=default_feature_file,
                 idx = features_all.index(ftr)
                 base_ftr[idx] = val
             diacritic_segs.append((seg, base_ftr))
+
         # Add segments with diacritics and features.
         if len(diacritic_segs) > 0:
             new_segs = [x[0] for x in diacritic_segs]
@@ -229,7 +233,6 @@ def read_features(feature_file=default_feature_file,
     if save_file:
         save_file = Path(save_file).with_suffix('.ftr')
         fm.ftr_matrix.to_csv(save_file, index_label='ipa')
-
     setattr(phon_config, 'feature_matrix', fm)
     return fm
 
@@ -340,38 +343,26 @@ def standardize_matrix(fm):
 
 
 # # # # # # # # # #
-# Segments and natural classes.
+# Natural classes and feature logic.
 
 
-def standardize_segment(x):
-    """
-    Standardize segment (partial implementation):
-    no script g, no tiebars, ...
-    """
-    ipa_substitutions = {'\u0261': 'g', 'ɡ': 'g', 'ɡ': 'g', '͡': ''}
-    y = x
-    for (s, r) in ipa_substitutions.items():
-        y = re.sub(s, r, y)
-    return y
-
-
-def get_features(fm, x, keep_zero=True):
+def get_features(fm, segment, keep_zero=True):
     """
     Return feature values of one segment, or feature
     values shared by a collection of segments.
     """
     empty = dict()
     # None / empty string / empty collection.
-    if not x:  #
+    if not segment:  #
         return empty
     # Single segment.
-    if isinstance(x, str):
-        ret = fm.seg2ftrs.get(x, empty).items()
+    if isinstance(segment, str):
+        ret = fm.seg2ftrs.get(segment, empty).items()
     # Collection of segments.
     else:
         ret = None
-        for xi in x:
-            ftrsi = fm.seg2ftrs.get(xi, empty)
+        for segmenti in segment:
+            ftrsi = fm.seg2ftrs.get(segmenti, empty)
             if ret is None:
                 ret = ftrsi.items()
             else:
@@ -380,21 +371,32 @@ def get_features(fm, x, keep_zero=True):
     if not keep_zero:
         ret = [(ftr, val) for (ftr,val) in ret \
             if not is_zero(val)]
-    return dict(ret)
+    ret = dict(ret)
+    return ret
 
 
-def get_change(fm, x, y):
+def get_change(fm, ftrs_x, ftrs_y):
     """
     Return (features of y) - (features of x).
+    todo: ignore unspecified features?
     """
-    if isinstance(x, str):
-        ftrs_x = get_features(fm, x)
-    else:
-        ftrs_x = x
-    if isinstance(x, str):
-        ftrs_y = get_features(fm, y)
-    else:
-        ftrs_y = y
+    # Handle segment or feature-value string.
+    if isinstance(ftrs_x, str):
+        ftrs_x = re.sub(r'\s+', '', ftrs_x)
+        if re.search(r'^\[.+\]$', ftrs_x):
+            ftrs_x = str2ftrs(fm, ftrs_x)[0]
+        else:
+            ftrs_x = get_features(fm, ftrs_x)
+
+    # Handle segment or feature-value string.
+    if isinstance(ftrs_y, str):
+        ftrs_y = re.sub(r'\s+', '', ftrs_y)
+        if re.search(r'^\[.+\]$', ftrs_y):
+            ftrs_y = str2ftrs(fm, ftrs_y)[0]
+        else:
+            ftrs_y = get_features(fm, ftrs_y)
+
+    # Get different feature values.
     ret = {}
     for ftr in fm.features:
         val = ftrs_y.get(ftr, '0')
@@ -463,6 +465,7 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
 
     # Intersect with segments arg if specified.
     if segments is not None:
+        segments = standardize_segments(segments)
         ret = ret & set(segments)
 
     return ret
@@ -519,6 +522,9 @@ def to_regexp(fm, pattern, segments=None):
     if not isinstance(pattern, (list, tuple)):
         pattern = [pattern]
     # Create regexp.
+    if segments is not None:
+        segments = standardize_segments(segments)
+
     ret = []
     for pattern1 in pattern:
         if isinstance(pattern1, dict):
@@ -560,39 +566,11 @@ if __name__ == "__main__":
     print(fm.to_regexp('[][+syllabic]'))
     print(get_change(fm, 'o', 'u'))
     print(fm.get_change('o', 'u'))
+    print(get_change(fm, '[+voice]', '[-voice]'))
+    print(fm.get_change('[+voice]', '[-voice]'))
     delta = fm.get_change('o', 't')
-    result = fm.get_features('o') | delta
+    result = fm.get_features('o') | delta  # last dict takes priority?
     print(fm.natural_class(result))
-
     ftrs = get_features(fm, ['i', 'e', 'a', 'o', 'u'])
     ftrs_str = ftrs2str(fm, ftrs)  # to_str
     print(ftrs_str)
-
-# # # # # # # # # #
-
-# deprecated
-# def ftrspec2vec(ftrspecs, feature_matrix=None):
-#     """
-
-#     Convert dictionary of feature specifications (ftr -> +/-/0)
-#     to feature + 'attention' vectors.
-#     If feature_matrix is omitted, default to environ.config.
-#     """
-#     if feature_matrix is not None:
-#         features = feature_matrix.features
-#     else:
-#         features = config.ftrs
-
-#     specs = {'+': 1., '-': -1., '0': 0.}
-#     n = len(features)
-#     w = np.zeros(n)
-#     a = np.zeros(n)
-#     for ftr, spec in ftrspecs.items():
-#         if spec == '0':
-#             continue
-#         i = features.index(ftr)
-#         if i < 0:
-#             print('ftrspec2vec: could not find feature', ftr)
-#         w[i] = specs[spec]  # non-zero feature specification
-#         a[i] = 1.  # 'attention' weight identifying non-zero feature
-#     return w, a
