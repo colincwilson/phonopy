@@ -6,6 +6,7 @@ import re
 import itertools
 import string
 import polars as pl
+import unicodedata
 from phonopy import config as phon_config
 from collections import Counter
 
@@ -197,13 +198,16 @@ def str_subs(word, subs={}, sep=' '):
     note: alternative to native str.maketrans / 
     str.translate for space-separated segment sequences.
     """
+    # Longer substitutions (by key / input string) take priority.
+    subs = dict(sorted(subs.items(), reverse=True))
     if isinstance(word, collection_types):
         return [str_subs(word_, subs, sep) for word_ in word]
-    sep_flag = (sep is not None and sep != '')
-    ret = word.split(sep) if sep_flag else word
+    if sep is None:
+        sep = ''
+    ret = word.split(sep) if sep else word
     for s, r in subs.items():
         ret = [subs[x] if x in subs else x for x in ret]
-    ret = sep.join(ret) if sep_flag else ''.join(ret)
+    ret = sep.join(ret)
     ret = str_squish(ret)
     return ret
 
@@ -230,6 +234,53 @@ def combos(s):
     ret = map(lambda x: tuple(x), ret)
     ret = list(dict.fromkeys(ret))
     return ret
+
+
+# # # # # # # # # #
+# Standardize IPA unicode.
+def standardize_segments(x):
+    """
+    Standardize segments in word (incl. single-segment words)
+    or collection of words. Partial implementation:
+        no script g, no tiebars, standard diacritics, ....
+    """
+    if isinstance(x, (list, set, tuple)):
+        return [standardize_segments(xi) for xi in x]
+    ipa_substitutions = { \
+        '\u0261': 'g', 'ɡ': 'g', 'ɡ': 'g', '͡': ''}
+    y = x
+    for (s, r) in ipa_substitutions.items():
+        y = re.sub(s, r, y)
+    y = standardize_diacritics(y)
+    return y
+
+
+def standardize_diacritics(x, sep=' '):
+    """
+    Standardize diacritics in word (incl. single-segment words)
+    or collection of words. Partial implementation: nasalization.
+    """
+    # Process collection of words.
+    if isinstance(x, collection_types):
+        ret = [standardize_diacritics(word, sep) for word in x]
+        return ret
+
+    # Process each segment in one word.
+    segs = x.split(sep) if sep != '' else x
+    if isinstance(segs, collection_types):
+        ret = [standardize_diacritics(seg, sep='') for seg in segs]
+        ret = sep.join(ret)
+        return ret
+
+    # Process one segment.
+    seg_ = unicodedata.normalize('NFD', segs)
+    # print(list(segs), '->', list(seg_))
+    # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
+    seg_ = seg_ \
+        .replace('\u007E', '\u0303') \
+        .replace('\u02DC', '\u0303')
+    #seg = unicodedata.normalize('NFC', seg_)
+    return seg_
 
 
 # # # # # # # # # #
@@ -323,6 +374,7 @@ def to_index(idx, subscript=True):
 
 
 # Alias.
+ignore_indices = str_deindex
 as_index = to_index
 
 # def retranscribe_sep(x, subs, sep=' '):
@@ -353,7 +405,7 @@ def unigram_tokens(word, sep=' '):
             toks += unigram_tokens(word_, sep)
         return toks
     try:
-        if sep is not None and sep != '':
+        if sep:
             toks = word.split(sep)
         else:
             toks = list(word)
@@ -404,7 +456,7 @@ def bigram_tokens(word, sep=' '):
         for word_ in word:
             toks += bigram_tokens(word_, sep)
         return toks
-    if sep is not None and sep != '':
+    if sep:
         word = word.split(sep)
     toks = list(zip(word[:-1], word[1:]))
     return toks
@@ -481,3 +533,11 @@ if __name__ == "__main__":
     print(add_delim('test'))
     print(remove_segs('testing', segs='aeiou'))
     print(remove_punc('[(testing).!]?'))
+    # Test diacritic standardization.
+    x = 'j̃ w̃ ĩ ũ ẽ õ ã ə̃'.split(' ')
+    print(f'Original: {x}')
+    x_std = standardize_segments(x)
+    print(f'Standardized: {x_std}')
+    for (seg1, seg2) in zip(x, x_std):
+        print(seg1 == seg2)
+        print(f'{seg1!a} -> {seg2!a}')
