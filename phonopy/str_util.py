@@ -241,7 +241,7 @@ digit2subscript = str.maketrans( \
     digits, subscript_digits)
 
 
-def str_index(word, skip=[], sep=' ', subscript=True):
+def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
     """
     Add integer indices (numbered left-to-right)
     to end of segments in separated word(s).
@@ -253,13 +253,14 @@ def str_index(word, skip=[], sep=' ', subscript=True):
     segs = word.split(sep) if sep != '' else word
     # Apply.
     use_skip = (skip is not None and len(skip) > 0)
-    segs_idx, idx = [], 0
+    segs_idx = []
+    idx = offset
     for seg in segs:
         if use_skip and seg in skip:
             segs_idx.append(seg)
             continue
         if subscript:
-            segs_idx.append(f'{seg}{as_index(idx)}')
+            segs_idx.append(f'{seg}{as_index(idx, subscript=True)}')
         else:
             segs_idx.append(f'{seg}_{idx}')
         idx += 1
@@ -273,7 +274,7 @@ def seg_index(seg, idx, subscript=True):
     Add integer index to a single segment.
     """
     if subscript:
-        ret = f'{seg}{as_index(idx)}'
+        ret = f'{seg}{as_index(idx, subscript=True)}'
     else:
         ret = f'{seg}_{idx}'
     return ret
@@ -337,7 +338,7 @@ as_index = to_index
 #     return y
 
 # # # # # # # # # #
-# Unigram/bigram frequencies.
+# Unigram / bigram types and frequencies.
 
 
 def unigram_tokens(word, sep=' '):
