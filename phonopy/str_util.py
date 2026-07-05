@@ -288,8 +288,8 @@ def standardize_diacritics(x, sep=' '):
 
 digits = '0123456789-'
 subscript_digits = '₀₁₂₃₄₅₆₇₈₉₋'
-digit2subscript = str.maketrans( \
-    digits, subscript_digits)
+digit2subscript = str.maketrans(digits, subscript_digits)
+subscript2digit = str.maketrans(subscript_digits, digits)
 
 
 def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
@@ -371,6 +371,20 @@ def to_index(idx, subscript=True):
     #     return None
     ret = idx.translate(digit2subscript)
     return ret
+
+
+def get_index(seg, subscript=True):
+    """ Get integer index from end of segment. """
+    if subscript:
+        idx = re.search(f'[{subscript_digits}]+$', seg)
+    else:
+        idx = re.search(f'_[{digits}]+$', seg)
+    if idx:
+        idx = idx.group(0)
+        if not subscript:
+            idx = idx[1:]  # remove leading underscore
+        return idx
+    return None
 
 
 # Alias.
