@@ -20,7 +20,7 @@ collection_types = (list, set, tuple)  # disjunctive type
 
 def str_squish(word):
     """
-    Collapse consecutive space chars to single space,
+    Collapse consecutive whitespace chars to single space,
     remove leading/trailing spaces.
     see: https://stringr.tidyverse.org/reference/str_trim.html
     """
@@ -322,7 +322,7 @@ def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
 
 def seg_index(seg, idx, subscript=True):
     """
-    Add integer index to a single segment.
+    Add integer index to a segment.
     """
     if subscript:
         ret = f'{seg}{as_index(idx, subscript=True)}'
@@ -353,7 +353,7 @@ def str_deindex(word, sep=' ', subscript=True):
 
 def seg_deindex(seg, subscript=True):
     """
-    Remove integer index from a single segment.
+    Remove integer index from a segment.
     """
     if subscript:
         ret = re.sub(f'[{subscript_digits}]+$', '', seg)
@@ -374,7 +374,7 @@ def to_index(idx, subscript=True):
 
 
 def get_index(seg, subscript=True):
-    """ Get integer index from end of segment. """
+    """ Get integer index from a segment. """
     if subscript:
         idx = re.search(f'[{subscript_digits}]+$', seg)
     else:
