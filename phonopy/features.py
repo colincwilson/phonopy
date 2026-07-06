@@ -35,6 +35,7 @@ class FeatureMatrix():
         self.segments = segments  # Segments (incl. epsilon/bos/eos).
         self.vowels = vowels  # Segments that are vowels.
         self.features = features  # Feature names.
+        self.nfeature = len(features)  # Number of features.
         # Feature matrix, values in {'+', '-', '0'}.
         # format: one row per segment, features in columns
         self.ftr_matrix = ftr_matrix
@@ -257,9 +258,7 @@ def one_hot_features(segments=None,
     if isinstance(segments, int):
         segments = string.ascii_lowercase[:segments]
     features = segments[:]
-    ftr_matrix = pd.DataFrame( \
-        np.eye(len(segments))
-    )
+    ftr_matrix = pd.DataFrame(np.eye(len(segments)))
     ftr_matrix.columns = segments
     fm = FeatureMatrix(segments, vowels, features, ftr_matrix)
     if standardize:
