@@ -31,7 +31,7 @@ def str_squish(word):
     return ret
 
 
-def str_sep(word, segs=None, regexp=None):
+def str_split(word, segs=None, regexp=None):
     """
     Separate segments in word with spaces using
     alphabet (list of segments) or regexp.
@@ -46,11 +46,16 @@ def str_sep(word, segs=None, regexp=None):
         regexp = '(' + '|'.join(segs) + ')'
 
     if isinstance(word, collection_types):
-        return [str_sep(word_, segs, regexp) for word_ in word]
+        return [str_split(word_, segs, regexp) for word_ in word]
 
     ret = re.sub(regexp, '\\1 ', word)
     ret = str_squish(ret)
     return ret
+
+
+# Alias.
+# todo: deprecate
+str_sep = str_split
 
 
 def add_delim(word, edge='both', iostring=False):
@@ -73,7 +78,8 @@ def add_delim(word, edge='both', iostring=False):
     return ret
 
 
-str_delim = delim = add_delim  # Alias.
+# Alias.
+str_delim = delim = add_delim
 
 
 def remove_delim(word):
@@ -95,7 +101,8 @@ def remove_delim(word):
     return ret
 
 
-str_undelim = undelim = remove_delim  # Alias.
+# Alias.
+str_undelim = undelim = remove_delim
 
 
 def remove_epsilon(word):
@@ -212,7 +219,8 @@ def str_subs(word, subs={}, sep=' '):
     return ret
 
 
-retranscribe = str_subs  # Alias.
+# Alias.
+retranscribe = str_subs
 
 # # # # # # # # # #
 # Phonological pseudo-regexps.
@@ -447,7 +455,8 @@ def unigrams(word, sep=' '):
     return ret
 
 
-get_segments = unigrams  # Alias.
+# Alias.
+get_segments = unigrams
 
 
 def get_words(text, sep=' '):
@@ -542,8 +551,8 @@ if __name__ == "__main__":
     print(phon_config.bos, phon_config.eos, phon_config.epsilon)
     print(phon_config.eos)
     print(str_squish(' t  e s  t   '))
-    print(str_sep('cheek', segs=['ch', 'ee', 'k']))
-    print(str_sep('cheek', regexp='(ch|ee|k)'))
+    print(str_split('cheek', segs=['ch', 'ee', 'k']))
+    print(str_split('cheek', regexp='(ch|ee|k)'))
     print(add_delim('test'))
     print(remove_segs('testing', segs='aeiou'))
     print(remove_punc('[(testing).!]?'))
