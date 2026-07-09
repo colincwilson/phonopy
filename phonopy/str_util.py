@@ -240,7 +240,7 @@ def combos(s):
 # Standardize IPA unicode.
 def standardize_segments(x):
     """
-    Standardize segments in word (incl. single-segment words)
+    Standardize segments in word (incl. single segment)
     or collection of words. Partial implementation:
         no script g, no tiebars, standard diacritics, ....
     """
@@ -257,7 +257,7 @@ def standardize_segments(x):
 
 def standardize_diacritics(x, sep=' '):
     """
-    Standardize diacritics in word (incl. single-segment words)
+    Standardize diacritics in word (incl. single segment)
     or collection of words. Partial implementation: nasalization.
     """
     # Process collection of words.
