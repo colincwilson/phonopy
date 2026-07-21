@@ -174,6 +174,7 @@ def str_pad(word, n=1, sep=' ', pad=None, edge='end'):
 def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
     """
     Pad input/output strings to same length.
+    todo: combine with str_pad2, making n argument optional
     """
     if isinstance(input_, collection_types):
         if output_:
@@ -410,6 +411,43 @@ as_index = to_index
 #     y = [subs[yi] if yi in subs else yi for yi in y]
 #     y = sep.join(y)
 #     return y
+
+
+# # # # # # # # # #
+# Substrings / suffixes / prefixes of a string.
+def substrings(word, sep=' '):
+    """
+    Get all substrings of a string or list of strings.
+    """
+    if isinstance(word, collection_types):
+        return [substring(word_, start, end, sep) for word_ in word]
+    segs = word.split(sep) if sep != '' else list(word)
+    ret = [ sep.join(segs[i:j]) for i in range(len(segs)) \
+        for j in range(i + 1, len(segs) + 1) ]
+    return ret
+
+
+def prefixes(word, sep=' '):
+    """
+    Get all prefixes of a string or list of strings.
+    """
+    if isinstance(word, collection_types):
+        return [prefixes(word_, sep) for word_ in word]
+    segs = word.split(sep) if sep != '' else list(word)
+    ret = [sep.join(segs[:i]) for i in range(len(segs) + 1)]
+    return ret
+
+
+def suffixes(word, sep=' '):
+    """
+    Get all suffixes of a string or list of strings.
+    """
+    if isinstance(word, collection_types):
+        return [suffixes(word_, sep) for word_ in word]
+    segs = word.split(sep) if sep != '' else list(word)
+    ret = [sep.join(segs[i:]) for i in range(len(segs))]
+    return ret
+
 
 # # # # # # # # # #
 # Unigram / bigram types and frequencies.
