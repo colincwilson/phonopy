@@ -590,7 +590,7 @@ def pairwise_similarity(fm, segs_x, segs_y=None):
         for j, segj in enumerate(segs_y):
             ftrsj = fm.seg2ftr_vec[segj]
             ftrsj = ftr_vec2np(ftrsj)
-            sim[i, j] = cosine_similarity(ftrsi, ftrsj)
+            sim[i, j] = sim[j, i] = cosine_similarity(ftrsi, ftrsj)
     return sim
 
 
