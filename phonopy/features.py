@@ -3,10 +3,10 @@
 # Typical import:
 # from phonopy import features as phon_features
 import re, string, sys
-from pathlib import Path
+import numpy as np
 import pandas as pd  # todo: replace with polars
 #import polars as pl
-import numpy as np
+from pathlib import Path
 from collections import namedtuple
 
 from phonopy import config as phon_config
@@ -359,6 +359,7 @@ def get_features(fm, seg, keep_zero=True):
     # None / empty string / empty collection.
     if not seg:
         return empty
+
     # Single segment.
     if isinstance(seg, str):
         seg = re.sub(r'\s+', '', seg)
@@ -572,6 +573,42 @@ def is_zero(val):
 # Alias. [todo: deprecate]
 from_str = str2ftrs
 to_str = ftrs2str
+
+
+# # # # # # # # # #
+# Pairwise feature similarity of segments.
+# todo: delegate to panphon
+def pairwise_similarity(fm, segs_x, segs_y=None):
+    if segs_y is None:
+        segs_y = segs_x
+    m = len(segs_x)
+    n = len(segs_y)
+    sim = np.zeros((m, n))
+    for i, segi in enumerate(segs_x):
+        ftrsi = fm.seg2ftr_vec[segi]
+        ftrsi = ftr_vec2np(ftrsi)
+        for j, segj in enumerate(segs_y):
+            ftrsj = fm.seg2ftr_vec[segj]
+            ftrsj = ftr_vec2np(ftrsj)
+            sim[i, j] = cosine_similarity(ftrsi, ftrsj)
+    return sim
+
+
+def cosine_similarity(vec1, vec2):
+    """ Cosine similarity of two vectors. """
+    dot = np.dot(vec1, vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+    return dot / (norm1 * norm2)
+
+
+def ftr_vec2np(ftr_vec):
+    """ Convert feature vector to numpy array. """
+    ftr_vals = {'+': '1', '+1': '1', '-': '-1'}
+    ftr_vec = [ftr_vals.get(x, x) for x in ftr_vec]
+    ftr_vec = np.array(ftr_vec, dtype=float)
+    return ftr_vec
+
 
 # # # # # # # # # #
 
