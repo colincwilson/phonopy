@@ -55,37 +55,10 @@ def get_attribute(G, v, key):
     return get_attributes(G, v)[key]
 
 
-def get_neighbors(G, v, mode='all', pattern=None, strict=True):
-    """
-    Get immediate neighbors of vertex v as vertices (not vertex ids),
-    possibly restricted by mode or pattern.
-    """
-    ws = [G.vs[i] for i in G.neighbors(v, mode=mode)]
-    if pattern:
-        ws = [w for w in ws if isa(G, w, pattern, strict)]
-    return ws
-
-
-def get_successors(G, v, pattern=None, strict=True):
-    """
-    Get immediate successors of vertex v as vertices (not vertex ids),
-    possibly restricted by pattern.
-    """
-    return get_neighbors(G, v, mode='out', pattern=pattern, strict=strict)
-
-
-def get_predecessors(G, v, pattern=None, strict=True):
-    """
-    Get immediate predecessors of vertex v as vertices (not vertex ids),
-    possibly restricted by pattern.
-    """
-    return get_neighbors(G, v, mode='in', pattern=pattern, strict=strict)
-
-
 def isa(G, v, pattern=None, strict=True):
     """
-    Test vertex v in graph G against {key_i: val_i} pattern
-    or list/set/tuple of patterns applied _disjunctively_.
+    Test vertex v in graph G against one {key_i: val_i} pattern
+    or a collection of patterns applied _disjunctively_.
     """
     if G is None or v is None:
         return False
@@ -138,6 +111,52 @@ def get_vertices(G, phi=None):
     Get all vertices in graph G satisfying unary predicate phi.
     """
     return sat(G, v=None, phi=phi)
+
+
+def get_neighbors(G,
+                  v,
+                  mode='all',
+                  order=1,
+                  mindist=0,
+                  pattern=None,
+                  strict=True):
+    """
+    Get (immediate) neighbors of vertex v as vertices (not vertex ids),
+    possibly restricted by mode / order / mindist / pattern.
+    """
+    ws = G.neighborhood(v, mode=mode, order=order, mindist=mindist)
+    ws = [G.vs[i] for i in ws]
+    if pattern:
+        ws = [w for w in ws if isa(G, w, pattern, strict)]
+    return ws
+
+
+def get_successors(G, v, order=1, mindist=0, pattern=None, strict=True):
+    """
+    Get (immediate) successors of vertex v as vertices (not vertex ids),
+    possibly restricted by order / mindist / pattern.
+    """
+    return get_neighbors(G,
+                         v,
+                         mode='out',
+                         order=order,
+                         mindist=mindist,
+                         pattern=pattern,
+                         strict=strict)
+
+
+def get_predecessors(G, v, order=1, mindist=0, pattern=None, strict=True):
+    """
+    Get (immediate) predecessors of vertex v as vertices (not vertex ids),
+    possibly restricted by order / mindist / pattern.
+    """
+    return get_neighbors(G,
+                         v,
+                         mode='in',
+                         order=order,
+                         mindist=mindist,
+                         pattern=pattern,
+                         strict=strict)
 
 
 # # # # # # # # # #
