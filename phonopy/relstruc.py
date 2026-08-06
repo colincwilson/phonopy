@@ -99,6 +99,8 @@ def sat(G, v=None, phi=None):
         else returns all v in dom(G) s.t. G ⊨ phi[v].
     See (e.g.) Enderton 2001:83 on first-order satisfaction.
     """
+    if v is None and phi is None:
+        return list(G.vs)
     if phi is None:
         return True
     if v is not None:
