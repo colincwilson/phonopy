@@ -382,6 +382,16 @@ def to_index(idx, subscript=True):
     return ret
 
 
+def from_index(idx, subscript=True):
+    """ Convert subscript index to integer. """
+    if not subscript:
+        return idx
+    # if not re.search(f'^[{subscript_digits}]+$', idx):
+    #     return None
+    ret = idx.translate(subscript2digit)
+    return ret
+
+
 def get_index(seg, subscript=True):
     """ Get integer index from a segment. """
     if subscript:
