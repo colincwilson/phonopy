@@ -33,8 +33,8 @@ def str_squish(word):
 
 def str_split(word, segs=None, regexp=None):
     """
-    Separate segments in word with spaces using
-    alphabet (list of segments) or regexp.
+    Separate segments in word with spaces, optionally using
+    alphabet (list of segments) or regexp (segment disjunction).
     # see: torchtext.data.functional.simple_space_split
     """
     if segs is None and regexp is None:
@@ -174,7 +174,7 @@ def str_pad(word, n=1, sep=' ', pad=None, edge='end'):
 def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
     """
     Pad input/output strings to same length.
-    todo: combine with str_pad2, making n argument optional
+    todo: combine with str_pad, making n argument optional
     """
     if isinstance(input_, collection_types):
         if output_:
@@ -293,7 +293,7 @@ def standardize_diacritics(x, sep=' '):
 
 
 # # # # # # # # # #
-# Correspondence indices.
+# Position or correspondence indices.
 
 digits = '0123456789-'
 subscript_digits = '₀₁₂₃₄₅₆₇₈₉₋'
@@ -415,6 +415,7 @@ as_index = to_index
 
 # # # # # # # # # #
 # Substrings / suffixes / prefixes of a string.
+# todo: suffix/prefix lists and arrays
 def substrings(word, sep=' '):
     """
     Get all substrings of a string or list of strings.
@@ -447,6 +448,32 @@ def suffixes(word, sep=' '):
     segs = word.split(sep) if sep != '' else list(word)
     ret = [sep.join(segs[i:]) for i in range(len(segs))]
     return ret
+
+
+def lcp(x, y, prefix=True):
+    """
+    Longest common prefix (or suffix) of two segment sequences.
+    """
+    if x == y:
+        return x
+    if not prefix:
+        x = x[::-1]
+        y = y[::-1]
+    n_x, n_y = len(x), len(y)
+    n = max(n_x, n_y)
+    for i in range(n + 1):
+        if i >= n_x:
+            match = x
+            break
+        if i >= n_y:
+            match = y
+            break
+        if x[i] != y[i]:
+            match = x[:i]
+            break
+    if not prefix:
+        match = match[::-1]
+    return match
 
 
 # # # # # # # # # #
@@ -559,31 +586,7 @@ def grams(word, k=1, sep=' '):
     return None
 
 
-def lcp(x, y, prefix=True):
-    """
-    Longest common prefix (or suffix) of two segment sequences.
-    """
-    if x == y:
-        return x
-    if not prefix:
-        x = x[::-1]
-        y = y[::-1]
-    n_x, n_y = len(x), len(y)
-    n = max(n_x, n_y)
-    for i in range(n + 1):
-        if i >= n_x:
-            match = x
-            break
-        if i >= n_y:
-            match = y
-            break
-        if x[i] != y[i]:
-            match = x[:i]
-            break
-    if not prefix:
-        match = match[::-1]
-    return match
-
+# # # # # # # # # #
 
 if __name__ == "__main__":
     print(phon_config.bos, phon_config.eos, phon_config.epsilon)

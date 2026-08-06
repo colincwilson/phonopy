@@ -85,25 +85,25 @@ def get_predecessors(G, v, pattern=None, strict=True):
 def isa(G, v, pattern=None, strict=True):
     """
     Test vertex v in graph G against {key_i: val_i} pattern
-    or list/tuple of patterns applied _disjunctively_.
+    or list/set/tuple of patterns applied _disjunctively_.
     """
     if G is None or v is None:
         return False
     if not pattern:
         return True
-    elif isinstance(pattern, (list, tuple)):
+    elif isinstance(pattern, (list, set, tuple)):
         # Return True if match any pattern.
         for pattern_ in pattern:
-            if _isa(G, v, pattern_, strict):
+            if isa1(G, v, pattern_, strict):
                 return True
         return False
     else:
-        return _isa(G, v, pattern, strict)
+        return isa1(G, v, pattern, strict)
 
 
-def _isa(G, v, pattern=None, strict=True):
+def isa1(G, v, pattern=None, strict=True):
     """
-    Test vertex v in graph G against {key_i: val_i} pattern.
+    Test vertex v in graph G against one {key_i: val_i} pattern.
     """
     if G is None or v is None:
         return False
@@ -133,12 +133,22 @@ def sat(G, v=None, phi=None):
     return [v for v in G.vs if phi(G, v)]
 
 
+def get_vertices(G, phi=None):
+    """
+    Get all vertices in graph G satisfying unary predicate phi.
+    """
+    return sat(G, v=None, phi=phi)
+
+
 # # # # # # # # # #
 # Convert string -> tree -> graph; draw graphs.
 
 
 def string_to_tree(syntax_str):
-    """ Converted bracketed string to tree. """
+    """
+    Converted bracketed string to tree.
+    (delegates to NLTK Tree.fromstring)
+    """
     tree = Tree.fromstring(syntax_str)
     tree.pretty_print()
     return tree
@@ -155,7 +165,7 @@ def tree_to_graph(tree):
     """
     Convert tree to graph.
     Returns: igraph.Graph, root node index
-    [original version CoPilot (GPT-4.1)]
+    [original CoPilot (GPT-4.1)]
     """
     graph = igraph.Graph(directed=True)
     node_ids = {}
