@@ -119,7 +119,7 @@ def get_neighbors(G,
                   v,
                   mode='all',
                   order=1,
-                  mindist=0,
+                  mindist=1,
                   pattern=None,
                   strict=True):
     """
@@ -133,7 +133,7 @@ def get_neighbors(G,
     return ws
 
 
-def get_successors(G, v, order=1, mindist=0, pattern=None, strict=True):
+def get_successors(G, v, order=1, mindist=1, pattern=None, strict=True):
     """
     Get (immediate) successors of vertex v as vertices (not vertex ids),
     possibly restricted by order / mindist / pattern.
@@ -147,7 +147,7 @@ def get_successors(G, v, order=1, mindist=0, pattern=None, strict=True):
                          strict=strict)
 
 
-def get_predecessors(G, v, order=1, mindist=0, pattern=None, strict=True):
+def get_predecessors(G, v, order=1, mindist=1, pattern=None, strict=True):
     """
     Get (immediate) predecessors of vertex v as vertices (not vertex ids),
     possibly restricted by order / mindist / pattern.
