@@ -41,6 +41,8 @@ def get_attributes(G, v):
     """
     Get attributes of vertex by ID / name / object.
     """
+    if v is None:
+        return dict()
     if isinstance(v, int):
         v = G.vs[v]
     elif isinstance(v, str):
@@ -52,7 +54,12 @@ def get_attribute(G, v, key):
     """
     Get attribute of vertex by ID / name / object.
     """
-    return get_attributes(G, v)[key]
+    ret = get_attributes(G, v).get(key, None)
+    # try:
+    #     ret = get_attributes(G, v).get(key, None)
+    # except Exception as e:
+    #     print("Could not get attribute:", v, key)
+    return ret
 
 
 def isa(G, v, pattern=None, strict=True):
@@ -60,7 +67,7 @@ def isa(G, v, pattern=None, strict=True):
     Test vertex v in graph G against one {key_i: val_i} pattern
     or a collection of patterns applied _disjunctively_.
     """
-    if G is None or v is None:
+    if v is None:
         return False
     if not pattern:
         return True
@@ -78,7 +85,7 @@ def isa1(G, v, pattern=None, strict=True):
     """
     Test vertex v in graph G against one {key_i: val_i} pattern.
     """
-    if G is None or v is None:
+    if v is None:
         return False
     if not pattern:
         return True
@@ -126,6 +133,8 @@ def get_neighbors(G,
     Get (immediate) neighbors of vertex v as vertices (not vertex ids),
     possibly restricted by mode / order / mindist / pattern.
     """
+    if v is None:
+        return []
     ws = G.neighborhood(v, mode=mode, order=order, mindist=mindist)
     ws = [G.vs[i] for i in ws]
     if pattern:
