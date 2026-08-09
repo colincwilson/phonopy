@@ -253,8 +253,9 @@ def standardize_segments(x):
     or collection of words. Partial implementation:
     no script g, no tiebars, standard diacritics, ....
     """
-    if isinstance(x, (list, set, tuple)):
+    if isinstance(x, collection_types):
         return [standardize_segments(xi) for xi in x]
+    x = unicodedata.normalize('NFC', x)
     ipa_substitutions = { \
         '\u0261': 'g', 'ɡ': 'g', 'ɡ': 'g', '͡': ''}
     y = x
@@ -279,22 +280,25 @@ def standardize_diacritics(x, sep=' '):
         ret = [standardize_diacritics(word, sep) for word in x]
         return ret
 
-    # Process each segment in one word.
-    segs = x.split(sep) if sep != '' else x
-    if isinstance(segs, collection_types):
-        ret = [standardize_diacritics(seg, sep='') for seg in segs]
-        ret = sep.join(ret)
-        return ret
-
-    # Process one segment.
-    seg_ = unicodedata.normalize('NFD', segs)
-    # print(list(segs), '->', list(seg_))
     # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
-    seg_ = seg_ \
-        .replace('\u007E', '\u0303') \
-        .replace('\u02DC', '\u0303')
-    #seg = unicodedata.normalize('NFC', seg_)
-    return seg_
+    x = x.replace('\u007E', '\u0303').replace('\u02DC', '\u0303')
+    return x
+
+    # # Process each segment in one word.
+    # segs = x.split(sep) if sep != '' else x
+    # if isinstance(segs, collection_types):
+    #     ret = [standardize_diacritics(seg, sep='') for seg in segs]
+    #     ret = sep.join(ret)
+    #     return ret
+
+    # # Process one segment.
+    # # print(list(segs), '->', list(seg_))
+    # # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
+    # seg_ = seg_ \
+    #     .replace('\u007E', '\u0303') \
+    #     .replace('\u02DC', '\u0303')
+    # #seg = unicodedata.normalize('NFC', seg_)
+    # return seg_
 
 
 # # # # # # # # # #

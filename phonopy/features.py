@@ -10,7 +10,7 @@ from pathlib import Path
 from collections import namedtuple
 
 from phonopy import config as phon_config
-from phonopy.str_util import standardize_segments
+from phonopy.str_util import str_standardize
 
 default_feature_file = Path.home() / \
     'Code/Python/phonopy/extern/hayes_features.csv'
@@ -142,8 +142,12 @@ def read_features(feature_file=default_feature_file,
     ftr_matrix = ftr_matrix.iloc[:, 1:]
 
     # Standardize all segments.
-    segments_all = standardize_segments(segments_all)
+    segments_all = [str_standardize(x) for x in segments_all]
     #print('segments_all:', segments_all)
+
+    # Standardize arg segments.
+    if segments is not None:
+        segments = [str_standardize(x) for x in segments]
 
     # Handle segments with diacritics. [partial]
     # (feature names from Hayes matrix)
@@ -163,8 +167,6 @@ def read_features(feature_file=default_feature_file,
     ]
     diacritic_segments = []
     if segments is not None:
-        # Standardize segments.
-        segments = standardize_segments(segments)
         for seg in segments:
             # Detect and strip diacritics.
             base_seg = seg
@@ -178,11 +180,11 @@ def read_features(feature_file=default_feature_file,
             # Specify diacritic features.
             try:
                 idx = segments_all.index(base_seg)
-            except:
+            except Exception as e:
                 print(
                     f'Error: could not find index of base segment |{base_seg}| from {seg}'
                 )
-                raise
+                raise e
             base_ftr = [x for x in ftr_matrix.iloc[idx, :]]
             for ftr, val in diacritic_ftrs:
                 idx = features_all.index(ftr)
@@ -491,7 +493,7 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
 
     # Intersect with segments arg if specified.
     if segments is not None:
-        segments = standardize_segments(segments)
+        segments = [str_standardize(x) for x in segments]
         ret = ret & set(segments)
 
     return ret
@@ -549,7 +551,7 @@ def to_regexp(fm, pattern, segments=None):
         pattern = [pattern]
     # Create regexp.
     if segments is not None:
-        segments = standardize_segments(segments)
+        segments = [str_standardize(x) for x in segments]
 
     ret = []
     for pattern1 in pattern:
