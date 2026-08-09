@@ -251,7 +251,7 @@ def standardize_segments(x):
     """
     Standardize segments in word (incl. single segment)
     or collection of words. Partial implementation:
-        no script g, no tiebars, standard diacritics, ....
+    no script g, no tiebars, standard diacritics, ....
     """
     if isinstance(x, (list, set, tuple)):
         return [standardize_segments(xi) for xi in x]
@@ -262,6 +262,11 @@ def standardize_segments(x):
         y = re.sub(s, r, y)
     y = standardize_diacritics(y)
     return y
+
+
+# Alias.
+def str_standardize(x):
+    return standardize_segments(x)
 
 
 def standardize_diacritics(x, sep=' '):
