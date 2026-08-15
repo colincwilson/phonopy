@@ -218,7 +218,7 @@ def tree_to_graph(tree):
             pass
 
     add_nodes(tree)
-    print(node_ids)
+    # print(node_ids)
     root_id = 0
     return graph, root_id
 
@@ -228,17 +228,25 @@ def graph_info(graph):
     print(graph)
 
 
-def draw_graph(graph, ax=None):
+def draw_graph(graph, fig=None, ax=None):
     """
     Draw graph using igraph's built-in plotting.
     """
     if ax is None:
         fig, ax = plt.subplots()
-    if len(ax) > 1:
+    if isinstance(ax, list) and len(ax) > 1:
         ax = ax[0]
-    layout = graph.layout('dot')
-    igraph.plot(graph, layout=layout, target=ax)
-    return ax
+    ax.invert_yaxis()
+    layout = graph.layout('sugiyama')
+    igraph.plot(graph,
+                layout=layout,
+                vertex_shape='rectangle',
+                vertex_size=40,
+                vertex_color='white',
+                edge_color='black',
+                target=ax)
+    plt.show()
+    return fig, ax
 
 
 def draw_layered_graph(
