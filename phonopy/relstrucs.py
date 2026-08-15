@@ -1,7 +1,9 @@
-# Logical queries and visualization of relational structures
-# represented by graphs with node/vertex and edge attributes.
+# Logical queries, string->tree-> graph conversion, and visualization
+# of relational structures represented by graphs with node/vertex and
+# edge attributes. Backed by igraph, https://python.igraph.org.
 import os, re, sys
 import igraph
+import matplotlib.pyplot as plt
 from nltk.tree import *
 
 
@@ -174,19 +176,20 @@ def get_predecessors(G, v, order=1, mindist=1, pattern=None, strict=True):
 # Convert string -> tree -> graph; draw graphs.
 
 
-def string_to_tree(syntax_str):
+def string_to_tree(syntax_str, brackets='()', **kwargs):
     """
     Converted bracketed string to tree.
-    (delegates to NLTK Tree.fromstring)
+    (delegates to NLTK Tree.fromstring, see
+    https://www.nltk.org/api/nltk.tree.tree.html)
     """
-    tree = Tree.fromstring(syntax_str)
+    tree = Tree.fromstring(syntax_str, brackets='()', **kwargs)
     tree.pretty_print()
     return tree
 
 
-def string_to_graph(syntax_str):
+def string_to_graph(syntax_str, brackets='()', **kwargs):
     """ Convert bracketed string to graph. """
-    tree = string_to_tree(syntax_str)
+    tree = string_to_tree(syntax_str, brackets=brackets, **kwargs)
     graph = tree_to_graph(tree)
     return graph
 
@@ -216,7 +219,26 @@ def tree_to_graph(tree):
 
     add_nodes(tree)
     print(node_ids)
-    return graph, 0  # root node index is 0
+    root_id = 0
+    return graph, root_id
+
+
+def graph_info(graph):
+    """Print graph info."""
+    print(graph)
+
+
+def draw_graph(graph, ax=None):
+    """
+    Draw graph using igraph's built-in plotting.
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+    if len(ax) > 1:
+        ax = ax[0]
+    layout = graph.layout('dot')
+    igraph.plot(graph, layout=layout, target=ax)
+    return ax
 
 
 def draw_layered_graph(
