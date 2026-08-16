@@ -437,35 +437,43 @@ as_index = to_index
 # todo: suffix/prefix lists and arrays
 def substrings(word, sep=' '):
     """
-    Get all substrings of a string or list of strings.
+    Get all non-empty substrings of a string or list of strings.
+    Returns (substring, start_index, end_index) tuples.
     """
     if isinstance(word, collection_types):
         return [substring(word_, start, end, sep) for word_ in word]
     segs = word.split(sep) if sep != '' else list(word)
-    ret = [ sep.join(segs[i:j]) for i in range(len(segs)) \
-        for j in range(i + 1, len(segs) + 1) ]
+    nseg = len(segs)
+    ret = [(sep.join(segs[i:j]), i, j) for i in range(0, nseg) \
+        for j in range(i + 1, nseg + 1) ]
     return ret
 
 
 def prefixes(word, sep=' '):
     """
-    Get all prefixes of a string or list of strings.
+    Get all non-empty prefixes of a string or list of strings.
+    Returns (substring, start_index, end_index) tuples where
+    start_index is always 0.
     """
     if isinstance(word, collection_types):
         return [prefixes(word_, sep) for word_ in word]
     segs = word.split(sep) if sep != '' else list(word)
-    ret = [sep.join(segs[:i]) for i in range(len(segs) + 1)]
+    nseg = len(segs)
+    ret = [(sep.join(segs[:i]), 0, i) for i in range(1, nseg + 1)]
     return ret
 
 
 def suffixes(word, sep=' '):
     """
-    Get all suffixes of a string or list of strings.
+    Get all non-empty suffixes of a string or list of strings.
+    Returns (substring, start_index, end_index) tuples where
+    end_index is always the number of segments in the string.
     """
     if isinstance(word, collection_types):
         return [suffixes(word_, sep) for word_ in word]
     segs = word.split(sep) if sep != '' else list(word)
-    ret = [sep.join(segs[i:]) for i in range(len(segs))]
+    nseg = len(segs)
+    ret = [(sep.join(segs[i:]), i, nseg) for i in range(nseg)]
     return ret
 
 
