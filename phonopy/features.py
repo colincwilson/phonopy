@@ -1,6 +1,6 @@
 # Read and standardize phonological feature matrices;
 # prepare features matrices for use in pytorch.
-# Typical import:
+# Suggested import:
 # from phonopy import features as phon_features
 import re, string, sys
 import numpy as np
@@ -354,7 +354,7 @@ def standardize_matrix(fm):
 def get_features(fm, seg, keep_zero=True):
     """
     Return dict of feature values for one segment, or 
-    feature values shared by a collection of segments.
+    of feature values shared by a collection of segments.
     note: accepts feature-value strings in place of segments
     """
     empty = dict()
@@ -436,7 +436,7 @@ def subsumes(ftrs1, ftrs2):
     """
     Feature-value dict ftrs1 subsumes ftrs2 iff every
     non-zero feature value in ftrs1 is also in ftrs2
-    (e.g., vehicle subsumes bicycle, plane, truck, ...).
+    (e.g., vehicle subsumes plane, train, automobile, ...).
     """
     for ftr, val in ftrs1.items():
         if is_zero(val):
@@ -501,7 +501,7 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
 
 def str2ftrs(fm, ftrs):
     """
-    Convert feature-matrix string to feature-value dict.
+    Convert feature-matrix string to feature-value dict(s).
     note: '[]' is interpreted as [+seg(ment)].
     """
     ftrs = re.sub(r'[−]', '-', ftrs)  # Convert minus signs to dashes.
