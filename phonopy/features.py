@@ -579,7 +579,7 @@ to_str = ftrs2str
 
 # # # # # # # # # #
 # Feature-based similarity of segments.
-def cosine_similarity(vec1, vec2, feature_weights=None):
+def cosine_similarity(vec1, vec2, feature_weights=None, offset=0.0):
     """ (Weighted) Cosine similarity of two vectors. """
     if feature_weights is not None:
         vec1 = vec1 * feature_weights
@@ -591,11 +591,10 @@ def cosine_similarity(vec1, vec2, feature_weights=None):
     return sim
 
 
-def overlap_similarity(vec1, vec2, feature_weights=None):
+def overlap_similarity(vec1, vec2, feature_weights=None, offset=-0.5):
     """
     (Weighted) Jaccard similarity, treating [+F] and [-F] as different features.
     """
-    n = vec1.shape[0]
     use_feature_weights = (feature_weights is not None)
     if use_feature_weights:
         norm1 = np.linalg.norm(feature_weights * np.abs(vec1))
@@ -604,16 +603,16 @@ def overlap_similarity(vec1, vec2, feature_weights=None):
         norm1 = np.linalg.norm(vec1)
         norm2 = np.linalg.norm(vec2)
 
+    nftr = vec1.shape[0]
     overlap = 0.0
-    for i in range(n):
+    for i in range(nftr):
         if vec1[i] != 0 or vec2[i] != 0:
             if vec1[i] == vec2[i]:
-                print(fm.features[i], vec1[i], vec2[i])
                 if use_feature_weights:
                     overlap += feature_weights[i] * np.abs(vec1[i])
                 else:
                     overlap += np.abs(vec1[i])
-    sim = overlap / (norm1 * norm2)
+    sim = overlap / (norm1 * norm2) + offset
     return sim
 
 
@@ -622,6 +621,7 @@ def segment_similarity(fm,
                        seg2,
                        sim_func=cosine_similarity,
                        feature_weights=None,
+                       offset=0.0,
                        indel_weight=-1):
     """
     Return similarity of two segments based on feature vectors.
@@ -634,7 +634,7 @@ def segment_similarity(fm,
     ftrs2 = fm.seg2ftr_vec[seg2]
     ftrs1 = ftr_vec2np(ftrs1)
     ftrs2 = ftr_vec2np(ftrs2)
-    sim = sim_func(ftrs1, ftrs2, feature_weights)
+    sim = sim_func(ftrs1, ftrs2, feature_weights, offset)
     return sim
 
 
