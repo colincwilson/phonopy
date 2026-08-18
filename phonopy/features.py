@@ -692,8 +692,8 @@ if __name__ == "__main__":
     ftrs = get_features(fm, ['i', 'e', 'a', 'o', 'u'])
     ftrs_str = ftrs2str(fm, ftrs)  # to_str
     print(ftrs_str)
-    seg1 = 't'
-    seg2 = 'a'
+    seg1 = 's'
+    seg2 = 's'
     sim = segment_similarity(fm,
                              seg1,
                              seg2,
