@@ -355,7 +355,7 @@ def get_features(fm, seg, keep_zero=True):
     """
     Return dict of feature values for one segment, or 
     of feature values shared by a collection of segments.
-    note: accepts feature-value strings in place of segments
+    Accepts feature-value strings in place of segments.
     """
     empty = dict()
     # None / empty string / empty collection.
@@ -578,9 +578,71 @@ to_str = ftrs2str
 
 
 # # # # # # # # # #
-# Pairwise feature similarity of segments.
-# todo: delegate to panphon
+# Feature-based similarity of segments.
+def cosine_similarity(vec1, vec2, feature_weights=None):
+    """ (Weighted) Cosine similarity of two vectors. """
+    if feature_weights is not None:
+        vec1 = vec1 * feature_weights
+        vec2 = vec2 * feature_weights
+    prod = np.dot(vec1, vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+    sim = prod / (norm1 * norm2)
+    return sim
+
+
+def overlap_similarity(vec1, vec2, feature_weights=None):
+    """
+    (Weighted) Jaccard similarity, treating [+F] and [-F] as different features.
+    """
+    n = vec1.shape[0]
+    use_feature_weights = (feature_weights is not None)
+    if use_feature_weights:
+        norm1 = np.linalg.norm(feature_weights * np.abs(vec1))
+        norm2 = np.linalg.norm(feature_weights * np.abs(vec2))
+    else:
+        norm1 = np.linalg.norm(vec1)
+        norm2 = np.linalg.norm(vec2)
+
+    overlap = 0.0
+    for i in range(n):
+        if vec1[i] != 0 or vec2[i] != 0:
+            if vec1[i] == vec2[i]:
+                print(fm.features[i], vec1[i], vec2[i])
+                if use_feature_weights:
+                    overlap += feature_weights[i] * np.abs(vec1[i])
+                else:
+                    overlap += np.abs(vec1[i])
+    sim = overlap / (norm1 * norm2)
+    return sim
+
+
+def segment_similarity(fm,
+                       seg1,
+                       seg2,
+                       sim_func=cosine_similarity,
+                       feature_weights=None,
+                       indel_weight=-1):
+    """
+    Return similarity of two segments based on feature vectors.
+    Default similarity function is cosine similarity.
+    """
+    if indel_weight is not None:
+        if seg1 == phon_config.epsilon or seg2 == phon_config.epsilon:
+            return indel_weight
+    ftrs1 = fm.seg2ftr_vec[seg1]
+    ftrs2 = fm.seg2ftr_vec[seg2]
+    ftrs1 = ftr_vec2np(ftrs1)
+    ftrs2 = ftr_vec2np(ftrs2)
+    sim = sim_func(ftrs1, ftrs2, feature_weights)
+    return sim
+
+
 def pairwise_similarity(fm, segs_x, segs_y=None):
+    """
+    Pairwise feature similarity of segments.
+    todo: delegate to panphon
+    """
     if segs_y is None:
         segs_y = segs_x
     m = len(segs_x)
@@ -594,14 +656,6 @@ def pairwise_similarity(fm, segs_x, segs_y=None):
             ftrsj = ftr_vec2np(ftrsj)
             sim[i, j] = sim[j, i] = cosine_similarity(ftrsi, ftrsj)
     return sim
-
-
-def cosine_similarity(vec1, vec2):
-    """ Cosine similarity of two vectors. """
-    dot = np.dot(vec1, vec2)
-    norm1 = np.linalg.norm(vec1)
-    norm2 = np.linalg.norm(vec2)
-    return dot / (norm1 * norm2)
 
 
 def ftr_vec2np(ftr_vec):
@@ -638,3 +692,19 @@ if __name__ == "__main__":
     ftrs = get_features(fm, ['i', 'e', 'a', 'o', 'u'])
     ftrs_str = ftrs2str(fm, ftrs)  # to_str
     print(ftrs_str)
+    seg1 = 't'
+    seg2 = 'a'
+    sim = segment_similarity(fm,
+                             seg1,
+                             seg2,
+                             feature_weights=None,
+                             indel_weight=-1,
+                             sim_func=cosine_similarity)
+    print(f'cosine similarity ({seg1}, {seg2})', sim)
+    sim = segment_similarity(fm,
+                             seg1,
+                             seg2,
+                             feature_weights=None,
+                             indel_weight=-1,
+                             sim_func=overlap_similarity)
+    print(f'overlap similarity ({seg1}, {seg2})', sim)
