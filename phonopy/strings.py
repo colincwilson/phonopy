@@ -1,4 +1,5 @@
-# Convenience functions operating on string or list of strings.
+# Convenience functions operating on a string or collection of strings:
+# squish, split/tokenize, add/remove delimiters, remove punctuation, etc.
 # todo: func to remove punctuation
 # todo: mirror str_util.R
 
@@ -25,7 +26,7 @@ def str_squish(word):
     see: https://stringr.tidyverse.org/reference/str_trim.html
     """
     if isinstance(word, collection_types):
-        return [str_squish(word_) for word_ in word]
+        return [str_squish(w) for w in word]
     ret = re.sub(r'\s+', ' ', word)
     ret = ret.strip()
     return ret
@@ -46,7 +47,7 @@ def str_split(word, segs=None, regexp=None):
         regexp = '(' + '|'.join(segs) + ')'
 
     if isinstance(word, collection_types):
-        return [str_split(word_, segs, regexp) for word_ in word]
+        return [str_split(w, segs, regexp) for w in word]
 
     ret = re.sub(regexp, '\\1 ', word)
     ret = str_squish(ret)
@@ -54,8 +55,19 @@ def str_split(word, segs=None, regexp=None):
 
 
 # Alias.
-# todo: deprecate
-str_sep = str_split
+# todo: remove str_sep
+str_tokenize = str_sep = str_split
+
+
+def ipa_split(word):
+    """
+    Separate IPA segments in word with spaces.
+    """
+    if isinstance(word, collection_types):
+        return [ipa_split(w) for w in word]
+    ret = re.sub(r'([^\s])', '\\1 ', word)
+    ret = str_squish(ret)
+    return ret
 
 
 def add_delim(word, edge='both', iostring=False):
@@ -63,7 +75,7 @@ def add_delim(word, edge='both', iostring=False):
     Add begin/end delimiters to space-separated string.
     """
     if isinstance(word, collection_types):
-        return [add_delim(word_, edge, iostring) for word_ in word]
+        return [add_delim(w, edge, iostring) for w in word]
     bos = phon_config.bos
     eos = phon_config.eos
     if iostring:
@@ -87,7 +99,7 @@ def remove_delim(word):
     Remove begin/end delimiters.
     """
     if isinstance(word, collection_types):
-        return [remove_delim(word_) for word_ in word]
+        return [remove_delim(w) for w in word]
     bos = phon_config.bos
     eos = phon_config.eos
     ret = word
@@ -110,7 +122,7 @@ def remove_epsilon(word):
     Remove epsilons.
     """
     if isinstance(word, collection_types):
-        return [remove_epsilon(word_) for word_ in word]
+        return [remove_epsilon(w) for w in word]
     epsilon = phon_config.epsilon
     ret = word
     # Remove from iostring.
@@ -131,7 +143,7 @@ def remove_segs(word, segs=None, regexp=None, sep=' '):
         regexp = '(' + '|'.join(segs) + ')'
 
     if isinstance(word, collection_types):
-        return [remove(word_, segs, regexp, sep) for word_ in word]
+        return [remove(w, segs, regexp, sep) for w in word]
 
     ret = re.sub(regexp, '', word)
     ret = str_squish(ret)
@@ -144,7 +156,7 @@ def remove_punc(word):
     todo: sep argument
     """
     if isinstance(word, collection_types):
-        return [remove_punc(word_) for word_ in word]
+        return [remove_punc(w) for w in word]
     ret = re.sub(punc_regexp, '', word)
     ret = str_squish(ret)
     return ret
@@ -155,7 +167,7 @@ def str_pad(word, n=1, sep=' ', pad=None, edge='end'):
     Pad string up to length n at designated edge.
     """
     if isinstance(word, collection_types):
-        return [str_pad(word_, n, sep, pad, edge) for word_ in word]
+        return [str_pad(w, n, sep, pad, edge) for w in word]
     if word is None:
         word = ''
     ret = word.split(sep) if sep != '' else list(word)
@@ -209,7 +221,7 @@ def str_subs(word, subs={}, sep=' '):
     # Longer substitutions (by key / input string) take priority.
     subs = dict(sorted(subs.items(), reverse=True))
     if isinstance(word, collection_types):
-        return [str_subs(word_, subs, sep) for word_ in word]
+        return [str_subs(w, subs, sep) for w in word]
     if sep is None:
         sep = ''
     ret = word.split(sep) if sep else word
@@ -247,42 +259,42 @@ def combos(s):
 
 # # # # # # # # # #
 # Standardize IPA unicode.
-def standardize_segments(x):
+def standardize_segments(word):
     """
     Standardize segments in word (incl. single segment)
     or collection of words. Partial implementation:
     no script g, no tiebars, standard diacritics, ....
     """
-    if isinstance(x, collection_types):
-        return [standardize_segments(xi) for xi in x]
-    x = unicodedata.normalize('NFC', x)
+    if isinstance(word, collection_types):
+        return [standardize_segments(w) for w in word]
+    word = unicodedata.normalize('NFC', word)
     ipa_substitutions = { \
         '\u0261': 'g', 'ɡ': 'g', 'ɡ': 'g', '͡': ''}
-    y = x
+    word_out = word
     for (s, r) in ipa_substitutions.items():
-        y = re.sub(s, r, y)
-    y = standardize_diacritics(y)
-    return y
+        word_out = re.sub(s, r, word_out)
+    word_out = standardize_diacritics(word_out)
+    return word_out
 
 
 # Alias.
-def str_standardize(x):
-    return standardize_segments(x)
+def str_standardize(word):
+    return standardize_segments(word)
 
 
-def standardize_diacritics(x, sep=' '):
+def standardize_diacritics(word, sep=' '):
     """
     Standardize diacritics in word (incl. single segment)
     or collection of words. Partial implementation: nasalization.
     """
     # Process collection of words.
-    if isinstance(x, collection_types):
-        ret = [standardize_diacritics(word, sep) for word in x]
+    if isinstance(word, collection_types):
+        ret = [standardize_diacritics(w, sep) for w in word]
         return ret
 
     # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
-    x = x.replace('\u007E', '\u0303').replace('\u02DC', '\u0303')
-    return x
+    word = word.replace('\u007E', '\u0303').replace('\u02DC', '\u0303')
+    return word
 
     # # Process each segment in one word.
     # segs = x.split(sep) if sep != '' else x
@@ -316,7 +328,7 @@ def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
     to end of segments in separated word(s).
     """
     if isinstance(word, collection_types):
-        ret = [str_index(word_, skip, sep, subscript) for word_ in word]
+        ret = [str_index(w, skip, sep, subscript) for w in word]
         return ret
     # Split.
     segs = word.split(sep) if sep != '' else word
@@ -355,7 +367,7 @@ def str_deindex(word, sep=' ', subscript=True):
     separated word(s).
     """
     if isinstance(word, collection_types):
-        ret = [str_deindex(word_, sep) for word_ in word]
+        ret = [str_deindex(w, sep) for w in word]
         return ret
     # Split.
     segs = word.split(sep) if sep != '' else word
@@ -441,7 +453,7 @@ def substrings(word, sep=' '):
     Returns (substring, start_index, end_index) tuples.
     """
     if isinstance(word, collection_types):
-        return [substring(word_, start, end, sep) for word_ in word]
+        return [substring(w, start, end, sep) for w in word]
     segs = word.split(sep) if sep != '' else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[i:j]), i, j) for i in range(0, nseg) \
@@ -456,7 +468,7 @@ def prefixes(word, sep=' '):
     start_index is always 0.
     """
     if isinstance(word, collection_types):
-        return [prefixes(word_, sep) for word_ in word]
+        return [prefixes(w, sep) for w in word]
     segs = word.split(sep) if sep != '' else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[:i]), 0, i) for i in range(1, nseg + 1)]
@@ -470,7 +482,7 @@ def suffixes(word, sep=' '):
     end_index is always the number of segments in the string.
     """
     if isinstance(word, collection_types):
-        return [suffixes(word_, sep) for word_ in word]
+        return [suffixes(w, sep) for w in word]
     segs = word.split(sep) if sep != '' else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[i:]), i, nseg) for i in range(nseg)]
@@ -515,8 +527,8 @@ def unigram_tokens(word, sep=' '):
         return []
     if isinstance(word, collection_types):
         toks = []
-        for word_ in word:
-            toks += unigram_tokens(word_, sep)
+        for w in word:
+            toks += unigram_tokens(w, sep)
         return toks
     try:
         if sep:
@@ -538,8 +550,8 @@ def unigrams(word, sep=' '):
         word = word.to_list()
     elif isinstance(word, str):
         word = [word]
-    for word_ in word:
-        ret.update(unigram_tokens(word_, sep))
+    for w in word:
+        ret.update(unigram_tokens(w, sep))
     ret = pl.DataFrame({ \
         'seg': ret.keys(),
         'freq': ret.values() })
@@ -568,8 +580,8 @@ def bigram_tokens(word, sep=' '):
         return []
     if isinstance(word, collection_types):
         toks = []
-        for word_ in word:
-            toks += bigram_tokens(word_, sep)
+        for w in word:
+            toks += bigram_tokens(w, sep)
         return toks
     if sep:
         word = word.split(sep)
@@ -586,8 +598,8 @@ def bigrams(word, sep=' '):
         word = word.to_list()
     elif isinstance(word, str):
         word = [word]
-    for word_ in word:
-        ret.update(bigram_tokens(word_, sep))
+    for w in word:
+        ret.update(bigram_tokens(w, sep))
     ret = pl.DataFrame({ \
         'bigram': ret.keys(),
         'freq': ret.values() })
