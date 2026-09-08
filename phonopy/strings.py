@@ -16,6 +16,9 @@ smart_punc = '“”‘’'
 punc = punc + smart_punc
 punc_regexp = r'[' + re.escape(punc) + r']'
 
+diacritic_regexp = \
+    '[\u0300-\u033B\u033D-\u036F\u02B0-\u02B8\u02C0\u02C1\u02DE\u207F]'
+
 collection_types = (list, set, tuple)  # disjunctive type
 
 
@@ -66,8 +69,14 @@ def ipa_split(word):
     if isinstance(word, collection_types):
         return [ipa_split(w) for w in word]
     ret = re.sub(r'([^\s])', '\\1 ', word)
+    ret = re.sub(f' ({diacritic_regexp})', '\\1', ret)
+    ret = re.sub(' ([ː:])', '\\1', ret)
     ret = str_squish(ret)
     return ret
+
+
+# Alias.
+ipa_tokenize = ipa_split
 
 
 def add_delim(word, edge='both', iostring=False):
