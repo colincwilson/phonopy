@@ -15,3 +15,6 @@ Maxwell is a Python library for learning the stochastic edit distance (SED) betw
 
 LingPy is a suite of open source Python modules for sequence comparison, distance analyses, data operations and visualization methods in quantitative historical linguistics
 <https://lingpy.org/>
+
+Python library for manipulating pronunciations using the International Phonetic Alphabet (IPA)
+<https://github.com/rhasspy/gruut-ipa>
