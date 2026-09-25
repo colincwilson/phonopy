@@ -18,3 +18,20 @@ LingPy is a suite of open source Python modules for sequence comparison, distanc
 
 Python library for manipulating pronunciations using the International Phonetic Alphabet (IPA)
 <https://github.com/rhasspy/gruut-ipa>
+
+distfeat is a standalone Python package for manipulating phonological features.
+<https://github.com/tresoldi/distfeat>
+
+merkmal is a C99 library for mapping supported IPA-like graphemes to versioned phonological feature representations and computing configurable experimental dissimilarities between segments.
+<https://github.com/tresoldi/merkmal>
+<https://merkmal.tresoldi.org/>
+
+Code and data for the library on Multiple ALIGNments
+<https://github.com/tresoldi/malign>
+
+Python package and data files for manipulating phonological segments (phones, phonemes) in terms of universal phonological features.
+<https://github.com/dmort27/panphon>
+<https://github.com/dmort27/panphon2>
+
+A tool for transcribing orthographic text as IPA (International Phonetic Alphabet)
+<https://github.com/dmort27/epitran>
