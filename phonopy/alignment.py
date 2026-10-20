@@ -9,7 +9,7 @@ from pprint import pprint
 
 #import panphon
 sys.path.append("/home/colin/Library/Python/string2string")
-from string2string.alignment import SmithWaterman
+from string2string.alignment import NeedlemanWunsch, SmithWaterman
 
 from phonopy import config as phon_config
 from phonopy import (features, strings)
@@ -17,6 +17,36 @@ from phonopy import (features, strings)
 fm = features.read_features()
 
 # # # # # # # # # #
+
+
+class Aligner():
+    """
+    Aligner for pairs of sequences (strings / lists / tuples) using the
+    Needleman-Wunsch algorithm.
+    """
+
+    def __init__(self, match_func, epsilon=phon_config.epsilon):
+        self.match_func = match_func
+        self.epsilon = epsilon
+        self.aligner = NeedlemanWunsch(match_func=match_func, gap_char=epsilon)
+
+    def get_alignment(self, seq1, seq2, sep=' ', return_score_matrix=True):
+        if isinstance(seq1, str):
+            if (sep is not None) and (sep != ''):
+                seq1 = seq1.split(sep)
+            else:
+                seq1 = list(seq1)
+        if isinstance(seq2, str):
+            if (sep is not None) and (sep != ''):
+                seq2 = seq2.split(sep)
+            else:
+                seq2 = list(seq2)
+
+        align = self.aligner.get_alignment(
+            seq1, seq2, return_score_matrix=return_score_matrix)
+
+        print(align)
+        return align
 
 
 def adjust_indices(align, offset):
@@ -49,10 +79,10 @@ def markup_self_alignment(x, align, offset):
     return y
 
 
-def self_align(x, sep=' ', incremental=True):
+def get_self_alignment(x, sep=' ', incremental=True):
     """
-    Find the best alignment of non-overlapping substrings of string/tuple/list 
-    x using the Smith-Waterman algorithm.
+    Find the best alignment of non-overlapping substrings of a string/tuple/list
+    using the Smith-Waterman algorithm.
     If incremental is True, process each prefix of the string and return the 
     best alignment for each prefix.
     """
@@ -116,9 +146,23 @@ def self_align(x, sep=' ', incremental=True):
     return ret
 
 
+self_align = get_self_alignment
+
 # # # # # # # # # #
 
 if __name__ == "__main__":
+
+    def match_func(seg1, seg2):
+        return features.segment_similarity(fm, seg1, seg2)
+
+    aligner = Aligner(match_func=match_func, epsilon=phon_config.epsilon)
+    strx = "satu"
+    stry = "satuɲa"
+    alignment = aligner.get_alignment(strx, stry, sep='')
+    print(alignment)
+    sys.exit(0)
+
+    # Self-alignment examples.
     examples = [
         "satu-satuɲa", "kəkaseh-kəkaseh", "sə-səpet", "asal-usol",
         "llama-llama", "doggy-oggy", "piggy-wiggy", "snalnal", "snalfak",
