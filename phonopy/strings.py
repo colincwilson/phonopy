@@ -41,13 +41,13 @@ def str_split(word, segs=None, regexp=None):
     alphabet (list of segments) or regexp (segment disjunction).
     # see: torchtext.data.functional.simple_space_split
     """
-    if segs is None and regexp is None:
-        regexp = '(.)'
-
-    if regexp is None:
+    if segs is not None:
         # Longer segments take priority.
         segs.sort(key=lambda x: len(x), reverse=True)
         regexp = '(' + '|'.join(segs) + ')'
+
+    if regexp is None:
+        regexp = '(.)'
 
     if isinstance(word, collection_types):
         return [str_split(w, segs, regexp) for w in word]
@@ -77,6 +77,19 @@ def ipa_split(word):
 
 # Alias.
 ipa_tokenize = ipa_split
+
+
+def str_list(word, sep=' '):
+    """
+    Convert string to list of segments.
+    """
+    if isinstance(word, collection_types):
+        return [str2list(w, sep) for w in word]
+    if sep is None or sep == '':
+        ret = list(word)
+    else:
+        ret = word.split(sep)
+    return ret
 
 
 def add_delim(word, edge='both', iostring=False):

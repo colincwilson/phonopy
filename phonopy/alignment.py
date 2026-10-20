@@ -32,21 +32,51 @@ class Aligner():
 
     def get_alignment(self, seq1, seq2, sep=' ', return_score_matrix=True):
         if isinstance(seq1, str):
-            if (sep is not None) and (sep != ''):
-                seq1 = seq1.split(sep)
-            else:
-                seq1 = list(seq1)
+            seq1 = strings.str_list(seq1, sep=sep)
         if isinstance(seq2, str):
-            if (sep is not None) and (sep != ''):
-                seq2 = seq2.split(sep)
-            else:
-                seq2 = list(seq2)
+            seq2 = strings.str_list(seq2, sep=sep)
 
         align = self.aligner.get_alignment(
             seq1, seq2, return_score_matrix=return_score_matrix)
 
-        print(align)
-        return align
+        edits = self.get_edits(align)
+        return align, edits
+
+    def get_edits(self, align):
+        """
+        Get the edit operations (insertions, deletions, substitutions) from an
+        alignment.
+        """
+        epsilon = self.epsilon
+        seq1, seq2 = align.strings
+        edits = list(zip(seq1.split(' | '), seq2.split(' | ')))
+
+        # Collapse consecutive insertions or deletions.
+        collapsed_edits = []
+        for edit in edits:
+            if len(collapsed_edits) == 0:
+                collapsed_edits.append(edit)
+            else:
+                prev_edit = collapsed_edits[-1]
+                if (prev_edit[0] == epsilon and edit[0] == epsilon):
+                    collapsed_edits[-1] = \
+                        (epsilon, prev_edit[1] + ' ' + edit[1])
+                elif (prev_edit[1] == epsilon and edit[1] == epsilon):
+                    collapsed_edits[-1] = \
+                        (prev_edit[0] + ' ' + edit[0], epsilon)
+                else:
+                    collapsed_edits.append(edit)
+
+        # Represent edits in context.
+        context_edits = []
+        for i, edit in enumerate(collapsed_edits):
+            if edit[0] == edit[1]:
+                continue
+            if edit[0] != edit[1]:
+                context_edit = f'{edit[0]} -> {edit[1]} / {collapsed_edits[i-1][0]} __ {collapsed_edits[i+1][0]}'
+                context_edits.append(context_edit)
+
+        return context_edits
 
 
 def adjust_indices(align, offset):
@@ -151,15 +181,18 @@ self_align = get_self_alignment
 # # # # # # # # # #
 
 if __name__ == "__main__":
+    bos = phon_config.bos
+    eos = phon_config.eos
 
     def match_func(seg1, seg2):
         return features.segment_similarity(fm, seg1, seg2)
 
     aligner = Aligner(match_func=match_func, epsilon=phon_config.epsilon)
-    strx = "satu"
-    stry = "satuɲa"
-    alignment = aligner.get_alignment(strx, stry, sep='')
-    print(alignment)
+    strx = f"{bos}satu{eos}"
+    stry = f"{bos}satuɲa{eos}"
+    alignment, edits = aligner.get_alignment(strx, stry, sep='')
+    print(f"Edits for alignment of {strx} and {stry}")
+    print(edits)
     sys.exit(0)
 
     # Self-alignment examples.
