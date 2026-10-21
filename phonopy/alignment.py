@@ -158,7 +158,7 @@ class SelfAligner():
                     offset_best = j
             #print(align_best, score_best)
             print(
-                f'prefix {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}'
+                f'prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}'
             )
 
         ret = list(ret)
