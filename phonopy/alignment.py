@@ -1,10 +1,11 @@
-# Alignment (including self-alignment) of strings or other sequences,
-# possibly weighted by feature similarity.
-# todo: add other self-alignment methods, see wyfst/extra
+# Alignment (including self-alignment) and identification of contextual edits
+# of strings or other sequences, possibly weighted by feature similarity.
+# todo: add other (self-)alignment methods, see wyfst/extra
 import re, sys
 import heapq
 import numpy as np
 import matplotlib.pyplot as plt
+from collections import namedtuple
 from pprint import pprint
 
 #import panphon
@@ -15,6 +16,8 @@ from phonopy import config as phon_config
 from phonopy import (features, strings)
 
 fm = features.read_features()
+
+SelfAlignment = namedtuple("SelfAlignment", ["score", "alignment", "offset"])
 
 # # # # # # # # # #
 
@@ -38,7 +41,7 @@ class Aligner():
         """
         return features.segment_similarity(fm, seg1, seg2)
 
-    def get_alignment(self, seq1, seq2, sep=' ', return_score_matrix=True):
+    def get_alignment(self, seq1, seq2, sep=" ", return_score_matrix=True):
         """
         Return minimum-cost alignment and contextual edits for a
         pair of sequences (strings / lists / tuples).
@@ -61,7 +64,7 @@ class Aligner():
         """
         epsilon = self.epsilon
         seq1, seq2 = align.strings
-        edits = list(zip(seq1.split(' | '), seq2.split(' | ')))
+        edits = list(zip(seq1.split(" | "), seq2.split(" | ")))
 
         # Collapse consecutive insertions or deletions.
         collapsed_edits = []
@@ -72,10 +75,10 @@ class Aligner():
             prev_edit = collapsed_edits[-1]
             if (prev_edit[0] == epsilon and edit[0] == epsilon):
                 collapsed_edits[-1] = \
-                    (epsilon, prev_edit[1] + ' ' + edit[1])
+                    (epsilon, prev_edit[1] + " " + edit[1])
             elif (prev_edit[1] == epsilon and edit[1] == epsilon):
                 collapsed_edits[-1] = \
-                    (prev_edit[0] + ' ' + edit[0], epsilon)
+                    (prev_edit[0] + " " + edit[0], epsilon)
             else:
                 collapsed_edits.append(edit)
 
@@ -84,7 +87,7 @@ class Aligner():
         for i, edit in enumerate(collapsed_edits):
             if edit[0] == edit[1]:
                 continue
-            context_edit = f'{edit[0]} -> {edit[1]} / {collapsed_edits[i-1][0]} __ {collapsed_edits[i+1][0]}'
+            context_edit = f"{edit[0]} -> {edit[1]} / {collapsed_edits[i-1][0]} __ {collapsed_edits[i+1][0]}"
             context_edits.append(context_edit)
 
         return context_edits
@@ -119,14 +122,14 @@ class SelfAligner():
             offset=-0.75,
             indel_weight=-1.0)
 
-    def get_alignment(self, x, sep=' ', incremental=True, verbose=None):
+    def get_alignment(self, x, sep=" ", incremental=True, verbose=None):
         """
         Find the best alignment of non-overlapping substrings of a 
         string/tuple/list using the Smith-Waterman algorithm.
         If incremental is True, process each prefix of the string and 
         return the best alignment for each prefix.
         """
-        if sep is not None and sep != '':
+        if sep is not None and sep != "":
             x = x.split(sep)
         xlen = len(x)
 
@@ -148,6 +151,7 @@ class SelfAligner():
             align_best = None
             score_best = None
             offset_best = None
+            # Iterate over split/offset points within prefix.
             for j in range(1, len(prefix)):
                 prefix_ = prefix[:j]
                 _suffix = prefix[j:]
@@ -157,38 +161,42 @@ class SelfAligner():
                     align.strings[0], align.strings[1])
                 # score /= (xlen / 2) # normalize by string length
                 # score /= (i / 2) # normalize by prefix length
-                ret.add((score, align))
+                score = float(score)
+                ret.add(SelfAlignment(score=score, alignment=align, offset=j))
                 if score_best is None or score > score_best:
                     score_best = score
                     align_best = align
                     offset_best = j
-            #print(align_best, score_best)
 
             if verbose_flag:
                 print(
-                    f'prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}'
+                    f"prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}"
                 )
 
         ret = list(ret)
         heapq.heapify_max(ret)
         return ret
 
-    def markup_self_alignment(self, x, align, offset):
+    def markup_self_alignment(self, x, align, offset, sep=" "):
         align_strings = align.strings
         align_indices = align.indices
         if align_strings is None \
-            or align_strings[0] == '' \
-                or align_strings[1] == '':
+            or align_strings[0] == "" \
+                or align_strings[1] == "":
             return None
         if align_indices is None:
             return None
+
         span1, span2 = self.adjust_indices(align, offset)
-        y = x[:span1[0]] + ['⟨'] + x[span1[0]:span1[1]] + [
-            '⟩'
-        ] + x[span1[1]:span2[0]] + ['⟨'] + x[span2[0]:span2[1]] + [
-            '⟩'
-        ] + x[span2[1]:]
-        y = ' '.join(y)
+
+        if sep is not None and sep != "":
+            x = x.split(sep)
+        y = x[:span1[0]] \
+            + ["⟨"] + x[span1[0]:span1[1]] + ["⟩"] \
+            + x[span1[1]:span2[0]] \
+            + ["⟨"] + x[span2[0]:span2[1]] + ["⟩"] \
+            + x[span2[1]:]
+        y = " ".join(y)
         return y
 
     def adjust_indices(self, align, offset):
@@ -213,7 +221,7 @@ if __name__ == "__main__":
     aligner = Aligner(epsilon=phon_config.epsilon)
     strx = strings.str_split(f"{bos}satu{eos}")
     stry = strings.str_split(f"{bos}satuɲa{eos}")
-    alignment, edits = aligner.get_alignment(strx, stry, sep=' ')
+    alignment, edits = aligner.get_alignment(strx, stry, sep=" ")
     print(f"Edits for alignment of {strx} and {stry}")
     print(edits)
     print()
@@ -227,14 +235,14 @@ if __name__ == "__main__":
         "wofewo"
     ]
     strx = examples[2]
-    strx = [strx[i] for i in range(len(strx)) if strx[i] != '-']
+    strx = [strx[i] for i in range(len(strx)) if strx[i] != "-"]
     print(strx)
-    aligns = self_aligner.get_alignment(strx, sep='')
+    aligns = self_aligner.get_alignment(strx, sep="")
     #pprint(aligns)
 
     #strx = "s a t u s a t u ɲ a"
-    strx = 's ə s ə p e t'
-    stry = strx.split(' ')
+    strx = "s ə s ə p e t"
+    stry = strx.split(" ")
     stry_ = stry[:4]
     _stry = stry[4:]
     print(stry_, _stry)

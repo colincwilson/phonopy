@@ -13,12 +13,12 @@ from phonopy import config as phon_config
 from phonopy.str_util import str_standardize
 
 default_feature_file = Path.home() / \
-    'Code/Python/phonopy/extern/hayes_features.csv'
+    "Code/Python/phonopy/extern/hayes_features.csv"
 
 default_segments = [
-    'p', 'b', 't', 'd', 't͡ʃ', 'k', 'g', 'ʔ', 'f', 's', 'ʃ', 'h', 'm', 'n',
-    'ɲ', 'ŋ', 'r', 'j', 'w', 'l'
-] + ['i', 'e', 'a', 'o', 'u']
+    "p", "b", "t", "d", "t͡ʃ", "k", "g", "ʔ", "f", "s", "ʃ", "h", "m", "n",
+    "ɲ", "ŋ", "r", "j", "w", "l"
+] + ["i", "e", "a", "o", "u"]
 # ref. Maddieson (1986)
 
 # # # # # # # # # #
@@ -36,7 +36,7 @@ class FeatureMatrix():
         self.vowels = vowels  # Segments that are vowels.
         self.features = features  # Feature names.
         self.nfeature = len(features)  # Number of features.
-        # Feature matrix, values in {'+', '-', '0'}.
+        # Feature matrix, values in {"+", "-", "0"}.
         # format: one row per segment, features in columns
         self.ftr_matrix = ftr_matrix
         # Feature matrix as numpy array, values in {+1., -1., 0.}.
@@ -63,7 +63,7 @@ class FeatureMatrix():
         """
         Convert feature matrix to numpy ndarray.
         """
-        ftr_vals = {'+': '1', '+1': '1', '-': '-1'}
+        ftr_vals = {"+": "1", "+1": "1", "-": "-1"}
         ftr_matrix_vec = ftr_matrix.copy().replace(ftr_vals)
         ftr_matrix_vec = ftr_matrix_vec.to_numpy(dtype=float)
         # for (key, val) in ftr_specs.items():
@@ -101,11 +101,11 @@ def read_features(feature_file=default_feature_file,
     Read feature matrix from file with segments in first *column*. 
     If segments is specified, eliminates constant and redundant features. 
     If standardize flag is set, add:
-    - epsilon 'segment' with all-zero feature vector.
-    - non-epsilon feature 'sym'.
+    - epsilon "segment" with all-zero feature vector.
+    - non-epsilon feature "sym".
     - bos/eos delimiters and feature to identify them (begin:+1, end:-1).
-    - feature 'seg' to identify all segments (non-epsilon/bos/eos).
-    - feature 'C/V' to identify consonants (C) and vowels (V) (C:+1, V:-1).
+    - feature "seg" to identify all segments (non-epsilon/bos/eos).
+    - feature "C/V" to identify consonants (C) and vowels (V) (C:+1, V:-1).
     Otherwise these segments and features are assumed to be already 
     present in the feature matrix or file.
     todo: arrange segments in IPA order
@@ -113,9 +113,9 @@ def read_features(feature_file=default_feature_file,
 
     # Read matrix from file (absolute path).
     ftr_matrix = pd.read_csv(feature_file,
-                             sep=',',
-                             encoding='utf-8',
-                             comment='#')
+                             sep=",",
+                             encoding="utf-8",
+                             comment="#")
     if verbose:
         print(ftr_matrix)
 
@@ -123,10 +123,10 @@ def read_features(feature_file=default_feature_file,
     if 0:  # todo: make config option
         ftr_matrix_short = ftr_matrix.copy()
         ftr_matrix_long = ftr_matrix.copy()
-        ftr_matrix_short['long'] = '-'
-        ftr_matrix_long['long'] = '+'
+        ftr_matrix_short["long"] = "-"
+        ftr_matrix_long["long"] = "+"
         ftr_matrix_long.iloc[:, 0] = \
-            [x + 'ː' for x in ftr_matrix_long.iloc[:, 0]]
+            [x + "ː" for x in ftr_matrix_long.iloc[:, 0]]
         ftr_matrix = pd.concat( \
             [ftr_matrix_short, ftr_matrix_long],
             axis=0,
@@ -134,16 +134,16 @@ def read_features(feature_file=default_feature_file,
 
     # List all segments and features in the matrix, locate
     # syllabic feature, and remove first column (containing segments).
-    # ftr_matrix.iloc[:,0] = [normalize('NFC', x) for x in ftr_matrix.iloc[:,0]]
+    # ftr_matrix.iloc[:,0] = [normalize("NFC", x) for x in ftr_matrix.iloc[:,0]]
     segments_all = [x for x in ftr_matrix.iloc[:, 0]]
     features_all = [x for x in ftr_matrix.columns[1:]]
     syll_ftr = [ftr for ftr in features_all \
-        if re.match('^(syl|syll|syllabic)$', ftr)][0]
+        if re.match("^(syl|syll|syllabic)$", ftr)][0]
     ftr_matrix = ftr_matrix.iloc[:, 1:]
 
     # Standardize all segments.
     segments_all = [str_standardize(x) for x in segments_all]
-    #print('segments_all:', segments_all)
+    #print("segments_all:", segments_all)
 
     # Standardize arg segments.
     if segments is not None:
@@ -154,16 +154,16 @@ def read_features(feature_file=default_feature_file,
     # todo: split into separate function that maps
     # segments with diacritics to base segments and features.
     diacritics = [ \
-        ("[ˈ]", ('stress', '+')),
-        ("[ʲ]", ('high', '+')),  # fixme: palatalization
-        ("[ʼ]", ('constr.gl', '+')),
-        ("[ʰ]", ('spread.gl', '+')),
-        ("[ʱ]", ('spread.gl', '+')),  # Bengali
-        ("[*]", ('constr.gl', '+')),  # Korean
-        ("[ʷ]", ('round', '+')),
-        ("[˞]", ('rhotic', '+')),
-        ("\u0303", ('nasal', '+')),
-        ("[ˀ]", ('constr.gl', '+')),
+        ("[ˈ]", ("stress", "+")),
+        ("[ʲ]", ("high", "+")),  # fixme: palatalization
+        ("[ʼ]", ("constr.gl", "+")),
+        ("[ʰ]", ("spread.gl", "+")),
+        ("[ʱ]", ("spread.gl", "+")),  # Bengali
+        ("[*]", ("constr.gl", "+")),  # Korean
+        ("[ʷ]", ("round", "+")),
+        ("[˞]", ("rhotic", "+")),
+        ("\u0303", ("nasal", "+")),
+        ("[ˀ]", ("constr.gl", "+")),
     ]
     diacritic_segments = []
     if segments is not None:
@@ -174,7 +174,7 @@ def read_features(feature_file=default_feature_file,
             for (diacritic, ftrval) in diacritics:
                 if re.search(diacritic, base_seg):
                     diacritic_ftrs.append(ftrval)
-                    base_seg = re.sub(diacritic, '', base_seg)
+                    base_seg = re.sub(diacritic, "", base_seg)
             if len(diacritic_ftrs) == 0:
                 continue
             # Specify diacritic features.
@@ -182,7 +182,7 @@ def read_features(feature_file=default_feature_file,
                 idx = segments_all.index(base_seg)
             except Exception as e:
                 print(
-                    f'Error: could not find index of base segment |{base_seg}| from {seg}'
+                    f"Error: could not find index of base segment |{base_seg}| from {seg}"
                 )
                 raise e
             base_ftr = [x for x in ftr_matrix.iloc[idx, :]]
@@ -210,15 +210,15 @@ def read_features(feature_file=default_feature_file,
         missing_segments = \
             [x for x in segments if x not in segments_all]
         if len(missing_segments) > 0:
-            raise Exception(f'Segments missing from feature matrix: '
-                            f'{missing_segments}')
+            raise Exception(f"Segments missing from feature matrix: "
+                            f"{missing_segments}")
 
         segments = [x for x in segments_all if x in segments]
         ftr_matrix = ftr_matrix.loc[[x in segments for x in segments_all], :]
         ftr_matrix.reset_index(drop=True)
 
         features = [ftr for ftr in ftr_matrix.columns \
-            if ftr == 'syll_ftr' or ftr_matrix[ftr].nunique() > 1]
+            if ftr == "syll_ftr" or ftr_matrix[ftr].nunique() > 1]
         ftr_matrix = ftr_matrix.loc[:, features]
         ftr_matrix = ftr_matrix.reset_index(drop=True)
     else:
@@ -227,7 +227,7 @@ def read_features(feature_file=default_feature_file,
 
     # Syllabic segments.
     vowels = [x for i, x in enumerate(segments) \
-        if ftr_matrix[syll_ftr][i] == '+']
+        if ftr_matrix[syll_ftr][i] == "+"]
 
     # Standardize feature matrix.
     ftr_matrix.index = segments
@@ -238,9 +238,9 @@ def read_features(feature_file=default_feature_file,
     # Write feature matrix.
     # todo: pickle FeatureMatrix
     if save_file:
-        save_file = Path(save_file).with_suffix('.ftr')
-        fm.ftr_matrix.to_csv(save_file, index_label='ipa')
-    setattr(phon_config, 'feature_matrix', fm)
+        save_file = Path(save_file).with_suffix(".ftr")
+        fm.ftr_matrix.to_csv(save_file, index_label="ipa")
+    setattr(phon_config, "feature_matrix", fm)
     return fm
 
 
@@ -268,9 +268,9 @@ def one_hot_features(segments=None,
 
     if save_file:
         ftr_matrix = fm.ftr_matrix
-        ftr_matrix.to_csv(save_file.with_suffix('.ftr'), index_label='ipa')
+        ftr_matrix.to_csv(save_file.with_suffix(".ftr"), index_label="ipa")
 
-    setattr(phon_config, 'feature_matrix', fm)
+    setattr(phon_config, "feature_matrix", fm)
     return fm
 
 
@@ -287,7 +287,7 @@ def standardize_matrix(fm):
     (non-epsilon sym, begin/end, seg, C/V) to feature matrix.
     """
     if fm.vowels is None:
-        print('Vowels must be specified to standardize feature matrix')
+        print("Vowels must be specified to standardize feature matrix")
         sys.exit(0)
 
     # # # # # # # # # #
@@ -300,7 +300,7 @@ def standardize_matrix(fm):
 
     # Special segments are unspecified for all ordinary features.
     special_seg_vals = pd.DataFrame( \
-        {ftr: '0' for ftr in fm.features},
+        {ftr: "0" for ftr in fm.features},
         index=[0])
 
     # Special segments occupy first three rows of revised feature matrix.
@@ -311,33 +311,33 @@ def standardize_matrix(fm):
     # # # # # # # # # #
     # Special features.
     # Non-epsilon feature: all segments except epsilon are +
-    sym_ftr_vals = ['0'] + ['+'] * (len(segments) - 1)
+    sym_ftr_vals = ["0"] + ["+"] * (len(segments) - 1)
 
     # Delim ftr: bos is +, eos is -,
     # all others segments are unspecified.
-    delim_ftr_vals = ['0', '+', '-'] + ['0'] * (len(segments) - 3)
+    delim_ftr_vals = ["0", "+", "-"] + ["0"] * (len(segments) - 3)
 
-    # Ordinary seg ftr: consonants and vowels are '+',
+    # Ordinary seg ftr: consonants and vowels are "+",
     # all other segments are unspecified.
-    seg_ftr_vals = ['0', '0', '0'] + ['+'] * (len(segments) - 3)
+    seg_ftr_vals = ["0", "0", "0"] + ["+"] * (len(segments) - 3)
 
     # C/V ftr: consonants are +, vowels are -,
     # all other segments are unspecified.
-    cv_ftr_vals = ['0', '0', '0'] + \
-        ['-' if seg in fm.vowels else '+' for seg in fm.segments]
+    cv_ftr_vals = ["0", "0", "0"] + \
+        ["-" if seg in fm.vowels else "+" for seg in fm.segments]
 
     # Special features occupy first three
     # columns of revised feature matrix.
     special_ftrs = pd.DataFrame({
-        'sym': sym_ftr_vals,
-        'begin/end': delim_ftr_vals,
-        'seg': seg_ftr_vals,
-        'C/V': cv_ftr_vals
+        "sym": sym_ftr_vals,
+        "begin/end": delim_ftr_vals,
+        "seg": seg_ftr_vals,
+        "C/V": cv_ftr_vals
     })
     ftr_matrix = pd.concat([special_ftrs, ftr_matrix], axis=1) \
                    .reset_index(drop=True)
     ftr_matrix.index = segments  # todo: checkme
-    features = ['sym', 'begin/end', 'seg', 'C/V', *fm.features]
+    features = ["sym", "begin/end", "seg", "C/V", *fm.features]
     phon_config.sym_ftr = sym_ftr = 0
     phon_config.delim_ftr = delim_ftr = 1
     phon_config.seg_ftr = seg_ftr = 2
@@ -364,8 +364,8 @@ def get_features(fm, seg, keep_zero=True):
 
     # Single segment.
     if isinstance(seg, str):
-        seg = re.sub(r'\s+', '', seg)
-        if re.search(r'^\[.+\]$', seg):
+        seg = re.sub(r"\s+", "", seg)
+        if re.search(r"^\[.+\]$", seg):
             ret = str2ftrs(fm, seg)[0]
         else:
             ret = fm.seg2ftrs.get(seg, empty)
@@ -404,8 +404,8 @@ def get_change(fm, ftrs_x, ftrs_y):
     # Get input -> output feature change.
     ret = {}
     for ftr in fm.features:
-        val = ftrs_y.get(ftr, '0')
-        if ftrs_x.get(ftr, '0') != val:
+        val = ftrs_y.get(ftr, "0")
+        if ftrs_x.get(ftr, "0") != val:
             ret[ftr] = val
     return ret
 
@@ -416,8 +416,8 @@ def change_segments(fm, segs_x, ftrs_y):
     """
     # Get output features from one feature-value string or segment.
     if isinstance(ftrs_y, str):
-        ftrs_y = re.sub(r'\s+', '', ftrs_y)
-        if re.search(r'^\[.+\]$', ftrs_y):
+        ftrs_y = re.sub(r"\s+", "", ftrs_y)
+        if re.search(r"^\[.+\]$", ftrs_y):
             ftrs_y = str2ftrs(fm, ftrs_y)[0]
         else:
             ftrs_y = get_features(fm, ftrs_y)
@@ -475,10 +475,10 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
     # Handle numeric/verbose feature vals.
     for key in ftrs:
         val = ftrs[key]
-        if (val == 1 or val == '+1'):
-            ftrs[key] = '+'
-        elif (val == -1 or val == '-1'):
-            ftrs[key] = '-'
+        if (val == 1 or val == "+1"):
+            ftrs[key] = "+"
+        elif (val == -1 or val == "-1"):
+            ftrs[key] = "-"
 
     # Natural class as determined by subsumption.
     if not ftrs:
@@ -502,17 +502,17 @@ def natural_class(fm, ftrs=None, segments=None, **kwargs):
 def str2ftrs(fm, ftrs):
     """
     Convert feature-matrix string to feature-value dict(s).
-    note: '[]' is interpreted as [+seg(ment)].
+    note: "[]" is interpreted as [+seg(ment)].
     """
-    ftrs = re.sub(r'[−]', '-', ftrs)  # Convert minus signs to dashes.
-    ftrs = re.sub(r'\s+', '', ftrs)  # Delete all whitespace.
-    ftrs = re.sub(r'\[', '', ftrs)  # Delete opening brackets.
-    ftrs = ftrs.split(r']')[:-1]  # Split on closing brackets, discard empty.
+    ftrs = re.sub(r"[−]", "-", ftrs)  # Convert minus signs to dashes.
+    ftrs = re.sub(r"\s+", "", ftrs)  # Delete all whitespace.
+    ftrs = re.sub(r"\[", "", ftrs)  # Delete opening brackets.
+    ftrs = ftrs.split(r"]")[:-1]  # Split on closing brackets, discard empty.
     ret = []
     for ftrs1 in ftrs:
-        if ftrs1 == '':
-            ftrs1 = '+seg'
-        ftrs1 = ftrs1.split(',')
+        if ftrs1 == "":
+            ftrs1 = "+seg"
+        ftrs1 = ftrs1.split(",")
         ftrs1 = {x[1:]: x[0] for x in ftrs1 if len(x) > 1}
         ret.append(ftrs1)
     return ret
@@ -524,24 +524,24 @@ def ftrs2str(fm, ftrs):
     feature-matrix string.
     """
     if not ftrs:
-        return ''
+        return ""
     if not isinstance(ftrs, (list, tuple)):
         ftrs = [ftrs]
     ret = []
     for ftrs1 in ftrs:
         ftrs1 = list(ftrs1.items())
         ftrs1.sort(key=lambda ftr_val: fm.features.index(ftr_val[0]))
-        ret1 = [f'{val}{ftr}' for ftr, val in ftrs1 if not is_zero(val)]
-        ret1 = '[' + ', '.join(ret1) + ']'
+        ret1 = [f"{val}{ftr}" for ftr, val in ftrs1 if not is_zero(val)]
+        ret1 = "[" + ", ".join(ret1) + "]"
         ret.append(ret1)
-    return ''.join(ret)
+    return "".join(ret)
 
 
 def to_regexp(fm, pattern, segments=None):
     """
     Convert sequence of natural classes (segment sets), or
     feature-value dicts, or feature-matrix strings to regexp.
-    note: '[]' is interpreted as [+seg(ment)].
+    note: "[]" is interpreted as [+seg(ment)].
     """
     # Convert feature-matrix string to features.
     if isinstance(pattern, str):
@@ -561,14 +561,14 @@ def to_regexp(fm, pattern, segments=None):
         if segments is not None:
             pattern1 = [x for x in pattern1 if x in segments]
         pattern1.sort(key=lambda x: fm.segments.index(x))
-        ret.append('(' + '|'.join(pattern1) + ')')
+        ret.append("(" + "|".join(pattern1) + ")")
 
-    return ''.join(ret)
+    return "".join(ret)
 
 
 def is_zero(val):
     """ Is feature unspecified? """
-    ret = (val == '0') or (val == 0) or (val is None)
+    ret = (val == "0") or (val == 0) or (val is None)
     return ret
 
 
@@ -660,7 +660,7 @@ def pairwise_similarity(fm, segs_x, segs_y=None):
 
 def ftr_vec2np(ftr_vec):
     """ Convert feature vector to numpy array. """
-    ftr_vals = {'+': '1', '+1': '1', '-': '-1'}
+    ftr_vals = {"+": "1", "+1": "1", "-": "-1"}
     ftr_vec = [ftr_vals.get(x, x) for x in ftr_vec]
     ftr_vec = np.array(ftr_vec, dtype=float)
     return ftr_vec
@@ -676,35 +676,35 @@ if __name__ == "__main__":
     print(fm.ftr_matrix)
     print(fm.ftr_matrix_vec)
     #print(fm.ftr_matrix_vec.shape, len(fm.segments), len(fm.features))
-    print(get_features(fm, 'a'))
-    print(fm.get_features('a'))
-    print(natural_class(fm, '[+ syllabic ]'))
-    print(to_regexp(fm, '[+ syllabic ][-syllabic]'))
-    print(fm.to_regexp('[+ syllabic ][-syllabic]'))
-    print(fm.to_regexp('[][+syllabic]'))
-    print(get_change(fm, 'o', 'u'))
-    print(fm.get_change('o', 'u'))
-    print(get_change(fm, '[+voice]', '[-voice]'))
-    print(fm.get_change('[+voice]', '[-voice]'))
-    delta = fm.get_change('o', 't')
-    result = fm.get_features('o') | delta  # last dict takes priority?
+    print(get_features(fm, "a"))
+    print(fm.get_features("a"))
+    print(natural_class(fm, "[+ syllabic ]"))
+    print(to_regexp(fm, "[+ syllabic ][-syllabic]"))
+    print(fm.to_regexp("[+ syllabic ][-syllabic]"))
+    print(fm.to_regexp("[][+syllabic]"))
+    print(get_change(fm, "o", "u"))
+    print(fm.get_change("o", "u"))
+    print(get_change(fm, "[+voice]", "[-voice]"))
+    print(fm.get_change("[+voice]", "[-voice]"))
+    delta = fm.get_change("o", "t")
+    result = fm.get_features("o") | delta  # last dict takes priority?
     print(fm.natural_class(result))
-    ftrs = get_features(fm, ['i', 'e', 'a', 'o', 'u'])
+    ftrs = get_features(fm, ["i", "e", "a", "o", "u"])
     ftrs_str = ftrs2str(fm, ftrs)  # to_str
     print(ftrs_str)
-    seg1 = 's'
-    seg2 = 's'
+    seg1 = "s"
+    seg2 = "s"
     sim = segment_similarity(fm,
                              seg1,
                              seg2,
                              feature_weights=None,
                              indel_weight=-1,
                              sim_func=cosine_similarity)
-    print(f'cosine similarity ({seg1}, {seg2})', sim)
+    print(f"cosine similarity ({seg1}, {seg2})", sim)
     sim = segment_similarity(fm,
                              seg1,
                              seg2,
                              feature_weights=None,
                              indel_weight=-1,
                              sim_func=overlap_similarity)
-    print(f'overlap similarity ({seg1}, {seg2})', sim)
+    print(f"overlap similarity ({seg1}, {seg2})", sim)

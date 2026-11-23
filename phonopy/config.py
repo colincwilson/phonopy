@@ -1,8 +1,8 @@
 # Container for global variables in string environment.
 
-epsilon = 'ϵ'  # avoid 'ε' (confusable with IPA), alternative '𝜀'
-bos = '⋊'  # beginning of string / start token; alternatives '⊢', '>', <s>
-eos = '⋉'  # end of string / end token; alternatives '⊣', '<', or </s>
+epsilon = "ϵ"  # avoid "ε" (confusable with IPA), alt. "𝜀"
+bos = "⋊"  # beginning of string / start token; alt. "⊢", ">", <s>, <bos>
+eos = "⋉"  # end of string / end token; alt. "⊣", "<", </s>, <eos>
 
 
 def init(param):
@@ -10,9 +10,9 @@ def init(param):
     global epsilon, bos, eos
     if not isinstance(param, dict):
         param = vars(param)
-    if 'epsilon' in param:
-        epsilon = param['epsilon']
-    if 'bos' in param:
-        bos = param['bos']
-    if 'eos' in param:
-        eos = param['eos']
+    if "epsilon" in param:
+        epsilon = param["epsilon"]
+    if "bos" in param:
+        bos = param["bos"]
+    if "eos" in param:
+        eos = param["eos"]

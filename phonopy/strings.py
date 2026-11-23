@@ -14,10 +14,10 @@ from collections import Counter
 punc = string.punctuation
 smart_punc = '“”‘’'
 punc = punc + smart_punc
-punc_regexp = r'[' + re.escape(punc) + r']'
+punc_regexp = r"[" + re.escape(punc) + r"]"
 
 diacritic_regexp = \
-    '[\u0300-\u033B\u033D-\u036F\u02B0-\u02B8\u02C0\u02C1\u02DE\u207F]'
+    "[\u0300-\u033B\u033D-\u036F\u02B0-\u02B8\u02C0\u02C1\u02DE\u207F]"
 
 collection_types = (list, set, tuple)  # disjunctive type
 
@@ -30,7 +30,7 @@ def str_squish(word):
     """
     if isinstance(word, collection_types):
         return [str_squish(w) for w in word]
-    ret = re.sub(r'\s+', ' ', word)
+    ret = re.sub(r"\s+", " ", word)
     ret = ret.strip()
     return ret
 
@@ -44,15 +44,15 @@ def str_split(word, segs=None, regexp=None):
     if segs is not None:
         # Longer segments take priority.
         segs.sort(key=lambda x: len(x), reverse=True)
-        regexp = '(' + '|'.join(segs) + ')'
+        regexp = "(" + "|".join(segs) + ")"
 
     if regexp is None:
-        regexp = '(.)'
+        regexp = "(.)"
 
     if isinstance(word, collection_types):
         return [str_split(w, segs, regexp) for w in word]
 
-    ret = re.sub(regexp, '\\1 ', word)
+    ret = re.sub(regexp, "\\1 ", word)
     ret = str_squish(ret)
     return ret
 
@@ -68,9 +68,9 @@ def ipa_split(word):
     """
     if isinstance(word, collection_types):
         return [ipa_split(w) for w in word]
-    ret = re.sub(r'([^\s])', '\\1 ', word)
-    ret = re.sub(f' ({diacritic_regexp})', '\\1', ret)
-    ret = re.sub(' ([ː:])', '\\1', ret)
+    ret = re.sub(r"([^\s])", "\\1 ", word)
+    ret = re.sub(f" ({diacritic_regexp})", "\\1", ret)
+    ret = re.sub(" ([ː:])", "\\1", ret)
     ret = str_squish(ret)
     return ret
 
@@ -79,20 +79,20 @@ def ipa_split(word):
 ipa_tokenize = ipa_split
 
 
-def str_list(word, sep=' '):
+def str_list(word, sep=" "):
     """
     Convert string to list of segments.
     """
     if isinstance(word, collection_types):
         return [str2list(w, sep) for w in word]
-    if sep is None or sep == '':
+    if sep is None or sep == "":
         ret = list(word)
     else:
         ret = word.split(sep)
     return ret
 
 
-def add_delim(word, edge='both', iostring=False):
+def add_delim(word, edge="both", iostring=False):
     """
     Add begin/end delimiters to space-separated string.
     """
@@ -101,14 +101,14 @@ def add_delim(word, edge='both', iostring=False):
     bos = phon_config.bos
     eos = phon_config.eos
     if iostring:
-        bos = f'{bos}:{bos}'
-        eos = f'{eos}:{eos}'
-    if edge == 'begin':
-        ret = f'{bos} {word}'
-    elif edge == 'end':
-        ret = f'{word} {eos}'
+        bos = f"{bos}:{bos}"
+        eos = f"{eos}:{eos}"
+    if edge == "begin":
+        ret = f"{bos} {word}"
+    elif edge == "end":
+        ret = f"{word} {eos}"
     else:  # default
-        ret = f'{bos} {word} {eos}'
+        ret = f"{bos} {word} {eos}"
     return ret
 
 
@@ -126,11 +126,11 @@ def remove_delim(word):
     eos = phon_config.eos
     ret = word
     # Remove from iostring.
-    ret = re.sub(f'{bos}:{bos}', '', ret)
-    ret = re.sub(f'{eos}:{eos}', '', ret)
+    ret = re.sub(f"{bos}:{bos}", "", ret)
+    ret = re.sub(f"{eos}:{eos}", "", ret)
     # Remove from istring or ostring.
-    ret = re.sub(f'{bos}', '', ret)
-    ret = re.sub(f'{eos}', '', ret)
+    ret = re.sub(f"{bos}", "", ret)
+    ret = re.sub(f"{eos}", "", ret)
     ret = str_squish(ret)
     return ret
 
@@ -148,26 +148,26 @@ def remove_epsilon(word):
     epsilon = phon_config.epsilon
     ret = word
     # Remove from iostring.
-    ret = re.sub(f'{epsilon}:{epsilon}', '', ret)
+    ret = re.sub(f"{epsilon}:{epsilon}", "", ret)
     # Remove from istring or ostring.
-    ret = re.sub(f'{epsilon}', '', ret)
+    ret = re.sub(f"{epsilon}", "", ret)
     ret = str_squish(ret)
     return ret
 
 
-def remove_segs(word, segs=None, regexp=None, sep=' '):
+def remove_segs(word, segs=None, regexp=None, sep=" "):
     """
     Remove designated segments.
     """
     if segs is None and regexp is None:
         return word
     if regexp is None:
-        regexp = '(' + '|'.join(segs) + ')'
+        regexp = "(" + "|".join(segs) + ")"
 
     if isinstance(word, collection_types):
         return [remove(w, segs, regexp, sep) for w in word]
 
-    ret = re.sub(regexp, '', word)
+    ret = re.sub(regexp, "", word)
     ret = str_squish(ret)
     return ret
 
@@ -179,33 +179,33 @@ def remove_punc(word):
     """
     if isinstance(word, collection_types):
         return [remove_punc(w) for w in word]
-    ret = re.sub(punc_regexp, '', word)
+    ret = re.sub(punc_regexp, "", word)
     ret = str_squish(ret)
     return ret
 
 
-def str_pad(word, n=1, sep=' ', pad=None, edge='end'):
+def str_pad(word, n=1, sep=" ", pad=None, edge="end"):
     """
     Pad string up to length n at designated edge.
     """
     if isinstance(word, collection_types):
         return [str_pad(w, n, sep, pad, edge) for w in word]
     if word is None:
-        word = ''
-    ret = word.split(sep) if sep != '' else list(word)
+        word = ""
+    ret = word.split(sep) if sep != "" else list(word)
     if pad is None:
         pad = phon_config.epsilon
     if len(ret) < n:
         padding = [pad] * (n - len(ret))
-        if edge == 'end':
+        if edge == "end":
             ret = ret + padding
-        elif edge == 'begin':
+        elif edge == "begin":
             ret = padding + ret
     ret = sep.join(ret)
     return ret
 
 
-def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
+def str_pad2(input_, output_=None, sep=" ", pad=None, edge="end"):
     """
     Pad input/output strings to same length.
     todo: combine with str_pad, making n argument optional
@@ -218,12 +218,12 @@ def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
         return [str_pad2(x, y, sep, pad, edge) for (x, y) in pairs]
 
     if input_ is None:
-        input_ = ''
+        input_ = ""
     if output_ is None:
-        output_ = ''
+        output_ = ""
 
-    n_input = len(input_.split(sep)) if sep != '' else len(input_)
-    n_output = len(output_.split(sep)) if sep != '' else len(output_)
+    n_input = len(input_.split(sep)) if sep != "" else len(input_)
+    n_output = len(output_.split(sep)) if sep != "" else len(output_)
 
     if n_input < n_output:
         input_ = str_pad(input_, n_output, sep, pad, edge)
@@ -232,7 +232,7 @@ def str_pad2(input_, output_=None, sep=' ', pad=None, edge='end'):
     return (input_, output_)
 
 
-def str_subs(word, subs={}, sep=' '):
+def str_subs(word, subs={}, sep=" "):
     """
     Change transcription by applying dictionary of
     substitutions to string(s).
@@ -245,7 +245,7 @@ def str_subs(word, subs={}, sep=' '):
     if isinstance(word, collection_types):
         return [str_subs(w, subs, sep) for w in word]
     if sep is None:
-        sep = ''
+        sep = ""
     ret = word.split(sep) if sep else word
     for s, r in subs.items():
         ret = [subs[x] if x in subs else x for x in ret]
@@ -266,13 +266,13 @@ def combos(s):
     """
     Convert string representations of phonological sets
     (e.g., set of acceptable onsets) to list of tuples.
-    Ex. combos('(k|g) (r|l|w)') => [(k,r), (k,l), ... (g,w)])
+    Ex. combos("(k|g) (r|l|w)") => [(k,r), (k,l), ... (g,w)])
     """
     if isinstance(s, collection_types):
-        return [tuple(x.split(' ')) for x in s]
-    parts = s.split(' ')
-    parts = [str_squish(re.sub('[()]', '', part)) for part in parts]
-    parts = [part.split('|') for part in parts]
+        return [tuple(x.split(" ")) for x in s]
+    parts = s.split(" ")
+    parts = [str_squish(re.sub("[()]", "", part)) for part in parts]
+    parts = [part.split("|") for part in parts]
     ret = itertools.product(*parts)
     ret = map(lambda x: tuple(x), ret)
     ret = list(dict.fromkeys(ret))
@@ -289,9 +289,10 @@ def standardize_segments(word):
     """
     if isinstance(word, collection_types):
         return [standardize_segments(w) for w in word]
-    word = unicodedata.normalize('NFC', word)
+    word = unicodedata.normalize("NFC", word)
     ipa_substitutions = { \
-        '\u0261': 'g', 'ɡ': 'g', 'ɡ': 'g', '͡': ''}
+        "\u0261": "g", "ɡ": "g", "ɡ": "g", "ɐ": "a", "͡": ""}
+    # note: /ɐ/ not in Hayes feature chart (uses /a/ instead for mid low)
     word_out = word
     for (s, r) in ipa_substitutions.items():
         word_out = re.sub(s, r, word_out)
@@ -304,7 +305,7 @@ def str_standardize(word):
     return standardize_segments(word)
 
 
-def standardize_diacritics(word, sep=' '):
+def standardize_diacritics(word, sep=" "):
     """
     Standardize diacritics in word (incl. single segment)
     or collection of words. Partial implementation: nasalization.
@@ -315,36 +316,36 @@ def standardize_diacritics(word, sep=' '):
         return ret
 
     # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
-    word = word.replace('\u007E', '\u0303').replace('\u02DC', '\u0303')
+    word = word.replace("\u007E", "\u0303").replace("\u02DC", "\u0303")
     return word
 
     # # Process each segment in one word.
-    # segs = x.split(sep) if sep != '' else x
+    # segs = x.split(sep) if sep != "" else x
     # if isinstance(segs, collection_types):
-    #     ret = [standardize_diacritics(seg, sep='') for seg in segs]
+    #     ret = [standardize_diacritics(seg, sep="") for seg in segs]
     #     ret = sep.join(ret)
     #     return ret
 
     # # Process one segment.
-    # # print(list(segs), '->', list(seg_))
+    # # print(list(segs), "->", list(seg_))
     # # Nasalization: replace standalone tilde (U+007E) and modifier tilde (U+02DC) with combining tilde (U+0303).
     # seg_ = seg_ \
-    #     .replace('\u007E', '\u0303') \
-    #     .replace('\u02DC', '\u0303')
-    # #seg = unicodedata.normalize('NFC', seg_)
+    #     .replace("\u007E", "\u0303") \
+    #     .replace("\u02DC", "\u0303")
+    # #seg = unicodedata.normalize("NFC", seg_)
     # return seg_
 
 
 # # # # # # # # # #
 # Position or correspondence indices.
 
-digits = '0123456789-'
-subscript_digits = '₀₁₂₃₄₅₆₇₈₉₋'
+digits = "0123456789-"
+subscript_digits = "₀₁₂₃₄₅₆₇₈₉₋"
 digit2subscript = str.maketrans(digits, subscript_digits)
 subscript2digit = str.maketrans(subscript_digits, digits)
 
 
-def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
+def str_index(word, skip=[], sep=" ", offset=0, subscript=True):
     """
     Add integer indices (numbered left-to-right)
     to end of segments in separated word(s).
@@ -353,7 +354,7 @@ def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
         ret = [str_index(w, skip, sep, subscript) for w in word]
         return ret
     # Split.
-    segs = word.split(sep) if sep != '' else word
+    segs = word.split(sep) if sep != "" else word
     # Apply.
     use_skip = (skip is not None and len(skip) > 0)
     segs_idx = []
@@ -363,9 +364,9 @@ def str_index(word, skip=[], sep=' ', offset=0, subscript=True):
             segs_idx.append(seg)
             continue
         if subscript:
-            segs_idx.append(f'{seg}{as_index(idx, subscript=True)}')
+            segs_idx.append(f"{seg}{as_index(idx, subscript=True)}")
         else:
-            segs_idx.append(f'{seg}_{idx}')
+            segs_idx.append(f"{seg}_{idx}")
         idx += 1
     # Combine.
     ret = sep.join(segs_idx)
@@ -377,13 +378,13 @@ def seg_index(seg, idx, subscript=True):
     Add integer index to a segment.
     """
     if subscript:
-        ret = f'{seg}{as_index(idx, subscript=True)}'
+        ret = f"{seg}{as_index(idx, subscript=True)}"
     else:
-        ret = f'{seg}_{idx}'
+        ret = f"{seg}_{idx}"
     return ret
 
 
-def str_deindex(word, sep=' ', subscript=True):
+def str_deindex(word, sep=" ", subscript=True):
     """
     Remove integer indices from end of segments in 
     separated word(s).
@@ -392,12 +393,12 @@ def str_deindex(word, sep=' ', subscript=True):
         ret = [str_deindex(w, sep) for w in word]
         return ret
     # Split.
-    segs = word.split(sep) if sep != '' else word
+    segs = word.split(sep) if sep != "" else word
     # Apply.
     if subscript:
-        segs = [re.sub(f'[{subscript_digits}]+$', '', seg) for seg in segs]
+        segs = [re.sub(f"[{subscript_digits}]+$", "", seg) for seg in segs]
     else:
-        segs = [re.sub(f'_[{digits}]+$', '', seg) for seg in segs]
+        segs = [re.sub(f"_[{digits}]+$", "", seg) for seg in segs]
     # Combine.
     ret = sep.join(segs)
     return ret
@@ -408,9 +409,9 @@ def seg_deindex(seg, subscript=True):
     Remove integer index from a segment.
     """
     if subscript:
-        ret = re.sub(f'[{subscript_digits}]+$', '', seg)
+        ret = re.sub(f"[{subscript_digits}]+$", "", seg)
     else:
-        ret = re.sub(f'_[{digits}]+$', '', seg)
+        ret = re.sub(f"_[{digits}]+$", "", seg)
     return ret
 
 
@@ -419,7 +420,7 @@ def to_index(idx, subscript=True):
     idx = str(idx)
     if not subscript:
         return idx
-    # if not re.search(f'^[{digits}]+$', idx):
+    # if not re.search(f"^[{digits}]+$", idx):
     #     return None
     ret = idx.translate(digit2subscript)
     return ret
@@ -429,7 +430,7 @@ def from_index(idx, subscript=True):
     """ Convert subscript index to integer. """
     if not subscript:
         return idx
-    # if not re.search(f'^[{subscript_digits}]+$', idx):
+    # if not re.search(f"^[{subscript_digits}]+$", idx):
     #     return None
     ret = idx.translate(subscript2digit)
     return ret
@@ -438,9 +439,9 @@ def from_index(idx, subscript=True):
 def get_index(seg, subscript=True):
     """ Get integer index from a segment. """
     if subscript:
-        idx = re.search(f'[{subscript_digits}]+$', seg)
+        idx = re.search(f"[{subscript_digits}]+$", seg)
     else:
-        idx = re.search(f'_[{digits}]+$', seg)
+        idx = re.search(f"_[{digits}]+$", seg)
     if idx:
         idx = idx.group(0)
         if not subscript:
@@ -453,7 +454,7 @@ def get_index(seg, subscript=True):
 ignore_indices = str_deindex
 as_index = to_index
 
-# def retranscribe_sep(x, subs, sep=' '):
+# def retranscribe_sep(x, subs, sep=" "):
 #     """
 #     Change transcription by applying dictionary of
 #     substitutions to string(s) of separated segments.
@@ -469,21 +470,21 @@ as_index = to_index
 # # # # # # # # # #
 # Substrings / suffixes / prefixes of a string.
 # todo: suffix/prefix lists and arrays
-def substrings(word, sep=' '):
+def substrings(word, sep=" "):
     """
     Get all non-empty substrings of a string or list of strings.
     Returns (substring, start_index, end_index) tuples.
     """
     if isinstance(word, collection_types):
         return [substring(w, start, end, sep) for w in word]
-    segs = word.split(sep) if sep != '' else list(word)
+    segs = word.split(sep) if sep != "" else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[i:j]), i, j) for i in range(0, nseg) \
         for j in range(i + 1, nseg + 1) ]
     return ret
 
 
-def prefixes(word, sep=' '):
+def prefixes(word, sep=" "):
     """
     Get all non-empty prefixes of a string or list of strings.
     Returns (substring, start_index, end_index) tuples where
@@ -491,13 +492,13 @@ def prefixes(word, sep=' '):
     """
     if isinstance(word, collection_types):
         return [prefixes(w, sep) for w in word]
-    segs = word.split(sep) if sep != '' else list(word)
+    segs = word.split(sep) if sep != "" else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[:i]), 0, i) for i in range(1, nseg + 1)]
     return ret
 
 
-def suffixes(word, sep=' '):
+def suffixes(word, sep=" "):
     """
     Get all non-empty suffixes of a string or list of strings.
     Returns (substring, start_index, end_index) tuples where
@@ -505,7 +506,7 @@ def suffixes(word, sep=' '):
     """
     if isinstance(word, collection_types):
         return [suffixes(w, sep) for w in word]
-    segs = word.split(sep) if sep != '' else list(word)
+    segs = word.split(sep) if sep != "" else list(word)
     nseg = len(segs)
     ret = [(sep.join(segs[i:]), i, nseg) for i in range(nseg)]
     return ret
@@ -541,7 +542,7 @@ def lcp(x, y, prefix=True):
 # Unigram / bigram types and frequencies.
 
 
-def unigram_tokens(word, sep=' '):
+def unigram_tokens(word, sep=" "):
     """
     Get unigram tokens from word(s).
     """
@@ -558,12 +559,12 @@ def unigram_tokens(word, sep=' '):
         else:
             toks = list(word)
     except Exception as e:
-        #print(f'Error in unigram_tokens: {e} on word {word}')
+        #print(f"Error in unigram_tokens: {e} on word {word}")
         toks = []
     return toks
 
 
-def unigrams(word, sep=' '):
+def unigrams(word, sep=" "):
     """
     Get unigram types and type frequencies from word(s).
     """
@@ -575,9 +576,9 @@ def unigrams(word, sep=' '):
     for w in word:
         ret.update(unigram_tokens(w, sep))
     ret = pl.DataFrame({ \
-        'seg': ret.keys(),
-        'freq': ret.values() })
-    ret = ret.sort(by='freq', descending=True)
+        "seg": ret.keys(),
+        "freq": ret.values() })
+    ret = ret.sort(by="freq", descending=True)
     return ret
 
 
@@ -585,16 +586,16 @@ def unigrams(word, sep=' '):
 get_segments = unigrams
 
 
-def get_words(text, sep=' '):
+def get_words(text, sep=" "):
     """
     Get words types and type frequencies from text(s).
     """
     ret = unigrams(text, sep)
-    ret = ret.rename({'seg': 'word'})
+    ret = ret.rename({"seg": "word"})
     return ret
 
 
-def bigram_tokens(word, sep=' '):
+def bigram_tokens(word, sep=" "):
     """
     Get bigram tokens from one word.
     """
@@ -611,7 +612,7 @@ def bigram_tokens(word, sep=' '):
     return toks
 
 
-def bigrams(word, sep=' '):
+def bigrams(word, sep=" "):
     """
     Get bigrams and their type frequencies from word(s).
     """
@@ -623,27 +624,27 @@ def bigrams(word, sep=' '):
     for w in word:
         ret.update(bigram_tokens(w, sep))
     ret = pl.DataFrame({ \
-        'bigram': ret.keys(),
-        'freq': ret.values() })
-    ret = ret.sort(by='freq', descending=True)
+        "bigram": ret.keys(),
+        "freq": ret.values() })
+    ret = ret.sort(by="freq", descending=True)
     return ret
 
 
-def gram_tokens(word, k=1, sep=' '):
+def gram_tokens(word, k=1, sep=" "):
     if k == 1:
         return unigram_tokens(word, sep)
     if k == 2:
         return bigram_tokens(word, sep)
-    print('gram_tokens() not yet implemented for k > 2')
+    print("gram_tokens() not yet implemented for k > 2")
     return None
 
 
-def grams(word, k=1, sep=' '):
+def grams(word, k=1, sep=" "):
     if k == 1:
         return unigrams(word, sep)
     if k == 2:
         return bigrams(word, sep)
-    print(f'Nope: grams() not yet implemented for k={k} > 2.')
+    print(f"Nope: grams() not yet implemented for k={k} > 2.")
     return None
 
 
@@ -652,17 +653,17 @@ def grams(word, k=1, sep=' '):
 if __name__ == "__main__":
     print(phon_config.bos, phon_config.eos, phon_config.epsilon)
     print(phon_config.eos)
-    print(str_squish(' t  e s  t   '))
-    print(str_split('cheek', segs=['ch', 'ee', 'k']))
-    print(str_split('cheek', regexp='(ch|ee|k)'))
-    print(add_delim('test'))
-    print(remove_segs('testing', segs='aeiou'))
-    print(remove_punc('[(testing).!]?'))
+    print(str_squish(" t  e s  t   "))
+    print(str_split("cheek", segs=["ch", "ee", "k"]))
+    print(str_split("cheek", regexp="(ch|ee|k)"))
+    print(add_delim("test"))
+    print(remove_segs("testing", segs="aeiou"))
+    print(remove_punc("[(testing).!]?"))
     # Test diacritic standardization.
-    x = 'j̃ w̃ ĩ ũ ẽ õ ã ə̃'.split(' ')
-    print(f'Original: {x}')
+    x = "j̃ w̃ ĩ ũ ẽ õ ã ə̃".split(" ")
+    print(f"Original: {x}")
     x_std = standardize_segments(x)
-    print(f'Standardized: {x_std}')
+    print(f"Standardized: {x_std}")
     for (seg1, seg2) in zip(x, x_std):
         print(seg1 == seg2)
-        print(f'{seg1!a} -> {seg2!a}')
+        print(f"{seg1!a} -> {seg2!a}")

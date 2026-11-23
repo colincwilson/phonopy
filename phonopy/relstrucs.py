@@ -12,26 +12,26 @@ from nltk.tree import *
 def example_graph():
     G = igraph.Graph(directed=True)
     G.add_vertices(7)
-    G.vs[0]['name'] = G.vs[0]['label'] = 'syll1'
-    G.vs[0]['typ'] = 'SYLL'
-    G.vs[1]['name'] = G.vs[1]['label'] = 'onset1'
-    G.vs[1]['typ'] = 'ONSET'
-    G.vs[2]['name'] = G.vs[2]['label'] = 'nucleus1'
-    G.vs[2]['typ'] = 'NUCLEUS'
-    G.vs[3]['name'] = G.vs[3]['label'] = 'coda1'
-    G.vs[3]['typ'] = 'CODA'
-    G.vs[4]['name'] = G.vs[4]['label'] = 'g'
-    G.vs[4]['typ'] = 'SEG'
-    G.vs[5]['name'] = G.vs[5]['label'] = 'o'
-    G.vs[5]['typ'] = 'SEG'
-    G.vs[6]['name'] = G.vs[6]['label'] = 't'
-    G.vs[6]['typ'] = 'SEG'
-    G.add_edge(0, 1, typ='syll_part')
-    G.add_edge(0, 2, typ='syll_part')
-    G.add_edge(0, 3, typ='syll_part')
-    G.add_edge(1, 4, typ='part_seg')
-    G.add_edge(2, 5, typ='part_seg')
-    G.add_edge(3, 6, typ='part_seg')
+    G.vs[0]["name"] = G.vs[0]["label"] = "syll1"
+    G.vs[0]["typ"] = "SYLL"
+    G.vs[1]["name"] = G.vs[1]["label"] = "onset1"
+    G.vs[1]["typ"] = "ONSET"
+    G.vs[2]["name"] = G.vs[2]["label"] = "nucleus1"
+    G.vs[2]["typ"] = "NUCLEUS"
+    G.vs[3]["name"] = G.vs[3]["label"] = "coda1"
+    G.vs[3]["typ"] = "CODA"
+    G.vs[4]["name"] = G.vs[4]["label"] = "g"
+    G.vs[4]["typ"] = "SEG"
+    G.vs[5]["name"] = G.vs[5]["label"] = "o"
+    G.vs[5]["typ"] = "SEG"
+    G.vs[6]["name"] = G.vs[6]["label"] = "t"
+    G.vs[6]["typ"] = "SEG"
+    G.add_edge(0, 1, typ="syll_part")
+    G.add_edge(0, 2, typ="syll_part")
+    G.add_edge(0, 3, typ="syll_part")
+    G.add_edge(1, 4, typ="part_seg")
+    G.add_edge(2, 5, typ="part_seg")
+    G.add_edge(3, 6, typ="part_seg")
     return G
 
 
@@ -126,7 +126,7 @@ def get_vertices(G, phi=None):
 
 def get_neighbors(G,
                   v,
-                  mode='all',
+                  mode="all",
                   order=1,
                   mindist=1,
                   pattern=None,
@@ -151,7 +151,7 @@ def get_successors(G, v, order=1, mindist=1, pattern=None, strict=True):
     """
     return get_neighbors(G,
                          v,
-                         mode='out',
+                         mode="out",
                          order=order,
                          mindist=mindist,
                          pattern=pattern,
@@ -165,7 +165,7 @@ def get_predecessors(G, v, order=1, mindist=1, pattern=None, strict=True):
     """
     return get_neighbors(G,
                          v,
-                         mode='in',
+                         mode="in",
                          order=order,
                          mindist=mindist,
                          pattern=pattern,
@@ -176,18 +176,18 @@ def get_predecessors(G, v, order=1, mindist=1, pattern=None, strict=True):
 # Convert string -> tree -> graph; draw graphs.
 
 
-def string_to_tree(syntax_str, brackets='()', **kwargs):
+def string_to_tree(syntax_str, brackets="()", **kwargs):
     """
     Converted bracketed string to tree.
     (delegates to NLTK Tree.fromstring, see
     https://www.nltk.org/api/nltk.tree.tree.html)
     """
-    tree = Tree.fromstring(syntax_str, brackets='()', **kwargs)
+    tree = Tree.fromstring(syntax_str, brackets="()", **kwargs)
     tree.pretty_print()
     return tree
 
 
-def string_to_graph(syntax_str, brackets='()', **kwargs):
+def string_to_graph(syntax_str, brackets="()", **kwargs):
     """ Convert bracketed string to graph. """
     tree = string_to_tree(syntax_str, brackets=brackets, **kwargs)
     graph = tree_to_graph(tree)
@@ -205,12 +205,12 @@ def tree_to_graph(tree):
 
     def add_nodes(t, parent_id=None):
         node_id = len(graph.vs)
-        label = t.label() if hasattr(t, 'label') else str(t)
+        label = t.label() if hasattr(t, "label") else str(t)
         graph.add_vertex(name=label, label=label)
         node_ids[id(t)] = node_id
         if parent_id is not None:
             graph.add_edge(parent_id, node_id)
-        if hasattr(t, 'height') and t.height() > 1:
+        if hasattr(t, "height") and t.height() > 1:
             for child in t:
                 add_nodes(child, node_id)
         elif isinstance(t, str):
@@ -237,13 +237,13 @@ def draw_graph(graph, fig=None, ax=None):
     if isinstance(ax, list) and len(ax) > 1:
         ax = ax[0]
     ax.invert_yaxis()
-    layout = graph.layout('sugiyama')
+    layout = graph.layout("sugiyama")
     igraph.plot(graph,
                 layout=layout,
-                vertex_shape='rectangle',
+                vertex_shape="rectangle",
                 vertex_size=40,
-                vertex_color='white',
-                edge_color='black',
+                vertex_color="white",
+                edge_color="black",
                 target=ax)
     plt.show()
     return fig, ax
@@ -256,46 +256,46 @@ def draw_layered_graph(
 ):
     """
     Layout graph in GraphViz/dot format, arranging vertices
-    in rows by 'type' attribute. [original CoPilot (GPT-4.1)]
+    in rows by "type" attribute. [original CoPilot (GPT-4.1)]
     todo: color labels
     """
     # Group vertices by type
     type_to_nodes = {}
     for v in graph.vs:
-        t = v.attributes().get('typ', 'undef')
+        t = v.attributes().get("typ", "undef")
         type_to_nodes.setdefault(t, []).append(v.index)
 
-    lines = ['digraph G {', 'rankdir=LR;', 'node [shape=box]']
+    lines = ["digraph G {", "rankdir=LR;", "node [shape=box]"]
     # Create subgraphs for each type to enforce same rank (row).
     types = type_to_nodes.keys()
     for t in types:
         nodes = type_to_nodes[t]
-        lines.append(f'  subgraph cluster_{t} {{')
-        lines.append('    rank=same;')
+        lines.append(f"  subgraph cluster_{t} {{")
+        lines.append("    rank=same;")
         if color_map and t in color_map:
-            lines.append(f'    color="{color_map[t]}"')
+            lines.append(f"    color='{color_map[t]}'")
         for idx in nodes:
-            label = graph.vs[idx]['label'] \
-                if 'label' in graph.vs[idx].attributes() \
+            label = graph.vs[idx]["label"] \
+                if "label" in graph.vs[idx].attributes() \
                 else str(idx)
-            lines.append(f'    {idx} [label="{label}"];')
-        lines.append('  }')
+            lines.append(f"    {idx} [label='{label}'];")
+        lines.append("  }")
 
     # Add edges.
     for e in graph.es:
         src, tgt = e.source, e.target
-        lines.append(f'  {src} -> {tgt};')
+        lines.append(f"  {src} -> {tgt};")
 
-    lines.append('}')
-    ret = '\n'.join(lines)
+    lines.append("}")
+    ret = "\n".join(lines)
 
     # Write to file and convert to pdf.
     if source:
-        with open(source, 'w') as f:
+        with open(source, "w") as f:
             f.write(ret)
         source_in = str(source)
-        source_out = re.sub('.dot$', '.pdf', source_in)
-        cmd = f'dot -Tpdf {source_in} > {source_out}'
+        source_out = re.sub(".dot$", ".pdf", source_in)
+        cmd = f"dot -Tpdf {source_in} > {source_out}"
         os.system(cmd)
     return ret
 
@@ -307,4 +307,4 @@ if __name__ == "__main__":
     tree_str = "(S (NP (DT The) (NN dog)) (VP (VBD barked)))"
     graph, _ = string_to_graph(tree_str)
     print(list(graph.vs))
-    graph.write('fig/syntax_graph.dot', format='dot')
+    graph.write("fig/syntax_graph.dot", format="dot")

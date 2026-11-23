@@ -1,0 +1,48 @@
+/* Created by igraph 1.0.0 */
+digraph {
+  0 [
+    label=S
+    name=S
+  ];
+  1 [
+    label=NP
+    name=NP
+  ];
+  2 [
+    label=DT
+    name=DT
+  ];
+  3 [
+    label=The
+    name=The
+  ];
+  4 [
+    label=NN
+    name=NN
+  ];
+  5 [
+    label=dog
+    name=dog
+  ];
+  6 [
+    label=VP
+    name=VP
+  ];
+  7 [
+    label=VBD
+    name=VBD
+  ];
+  8 [
+    label=barked
+    name=barked
+  ];
+
+  0 -> 1;
+  1 -> 2;
+  2 -> 3;
+  1 -> 4;
+  4 -> 5;
+  0 -> 6;
+  6 -> 7;
+  7 -> 8;
+}
