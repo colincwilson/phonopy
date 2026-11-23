@@ -1,5 +1,6 @@
 __all__ = [
-    "config", "features", "relstruc", "str_util", "relstrucs", "strings"
+    "config", "alignment", "features", "relstruc", "str_util", "relstrucs",
+    "strings"
 ]
 
-from . import *
+# from . import *

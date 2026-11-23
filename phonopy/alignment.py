@@ -96,11 +96,15 @@ class SelfAligner():
     Smith-Waterman algorithm.
     """
 
-    def __init__(self, match_func=None, epsilon=phon_config.epsilon):
+    def __init__(self,
+                 match_func=None,
+                 epsilon=phon_config.epsilon,
+                 verbose=False):
         if match_func is None:
             match_func = self.match_func_default
         self.epsilon = epsilon
         self.aligner = SmithWaterman(match_func=match_func, gap_char=epsilon)
+        self.verbose = verbose
 
     def match_func_default(self, seg1, seg2):
         """
@@ -115,7 +119,7 @@ class SelfAligner():
             offset=-0.75,
             indel_weight=-1.0)
 
-    def get_alignment(self, x, sep=' ', incremental=True):
+    def get_alignment(self, x, sep=' ', incremental=True, verbose=None):
         """
         Find the best alignment of non-overlapping substrings of a 
         string/tuple/list using the Smith-Waterman algorithm.
@@ -125,6 +129,8 @@ class SelfAligner():
         if sep is not None and sep != '':
             x = x.split(sep)
         xlen = len(x)
+
+        verbose_flag = verbose if (verbose is not None) else self.verbose
 
         # Initialize an empty list to store the results
         ret = set()
@@ -157,9 +163,11 @@ class SelfAligner():
                     align_best = align
                     offset_best = j
             #print(align_best, score_best)
-            print(
-                f'prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}'
-            )
+
+            if verbose_flag:
+                print(
+                    f'prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}'
+                )
 
         ret = list(ret)
         heapq.heapify_max(ret)
