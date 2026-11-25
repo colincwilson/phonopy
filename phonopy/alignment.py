@@ -17,7 +17,7 @@ from phonopy import (features, strings)
 
 fm = features.read_features()
 
-SelfAlignment = namedtuple("SelfAlignment", ["score", "alignment", "offset"])
+SelfAlignment = namedtuple("SelfAlignment", ["score", "x", "i", "j", "align"])
 
 # # # # # # # # # #
 
@@ -129,14 +129,18 @@ class SelfAligner():
         If incremental is True, process each prefix of the string and 
         return the best alignment for each prefix.
         """
-        if sep is not None and sep != "":
-            x = x.split(sep)
-        xlen = len(x)
+        if isinstance(x, (list, tuple)):
+            x_ = x
+        elif sep is not None and sep != "":
+            x_ = x.split(sep)
+        else:
+            x_ = list(x)
+        xlen = len(x_)
 
         verbose_flag = verbose if (verbose is not None) else self.verbose
 
         # Initialize an empty list to store the results
-        ret = set()
+        ret = []
 
         # Iterate over prefixes if incremental, else entire string.
         if incremental:
@@ -146,11 +150,10 @@ class SelfAligner():
 
         # Iterative over prefixes.
         for i in prefix_posns:
-            prefix = x[:i]
+            prefix = x_[:i]
             # Find best alignment within a prefix.
-            align_best = None
+            salign_best = None
             score_best = None
-            offset_best = None
             # Iterate over split/offset points within prefix.
             for j in range(1, len(prefix)):
                 prefix_ = prefix[:j]
@@ -162,22 +165,28 @@ class SelfAligner():
                 # score /= (xlen / 2) # normalize by string length
                 # score /= (i / 2) # normalize by prefix length
                 score = float(score)
-                ret.add(SelfAlignment(score=score, alignment=align, offset=j))
+                salign = SelfAlignment(score=score, x=x, i=i, j=j, align=align)
+                ret.append(salign)
                 if score_best is None or score > score_best:
                     score_best = score
-                    align_best = align
+                    salign_best = salign
                     offset_best = j
 
             if verbose_flag:
                 print(
-                    f"prefix len {i}, {self.markup_self_alignment(x, align_best, offset_best)}, {score_best}"
+                    f"prefix len {i}, {self.markup_alignment(salign_best, sep)}, {score_best}"
                 )
 
         ret = list(ret)
         heapq.heapify_max(ret)
         return ret
 
-    def markup_self_alignment(self, x, align, offset, sep=" "):
+    def markup_alignment(self, salign, sep=" "):
+        # todo: add correspondence indices to aligned subparts
+        x = salign.x
+        i = salign.i
+        j = salign.j
+        align = salign.align
         align_strings = align.strings
         align_indices = align.indices
         if align_strings is None \
@@ -187,15 +196,20 @@ class SelfAligner():
         if align_indices is None:
             return None
 
-        span1, span2 = self.adjust_indices(align, offset)
+        span1, span2 = self.adjust_indices(align, j)
 
-        if sep is not None and sep != "":
-            x = x.split(sep)
-        y = x[:span1[0]] \
-            + ["⟨"] + x[span1[0]:span1[1]] + ["⟩"] \
-            + x[span1[1]:span2[0]] \
-            + ["⟨"] + x[span2[0]:span2[1]] + ["⟩"] \
-            + x[span2[1]:]
+        if isinstance(x, (list, tuple)):
+            x_ = x
+        elif sep is not None and sep != "":
+            x_ = x.split(sep)
+        else:
+            x_ = list(x)
+
+        y = x_[:span1[0]] \
+            + ["⟨"] + x_[span1[0]:span1[1]] + ["⟩"] \
+            + x_[span1[1]:span2[0]] \
+            + ["⟨"] + x_[span2[0]:span2[1]] + ["⟩"] \
+            + x_[span2[1]:]
         y = " ".join(y)
         return y
 
@@ -219,10 +233,10 @@ if __name__ == "__main__":
     eos = phon_config.eos
 
     aligner = Aligner(epsilon=phon_config.epsilon)
-    strx = strings.str_split(f"{bos}satu{eos}")
-    stry = strings.str_split(f"{bos}satuɲa{eos}")
-    alignment, edits = aligner.get_alignment(strx, stry, sep=" ")
-    print(f"Edits for alignment of {strx} and {stry}")
+    x_str = strings.str_split(f"{bos}satu{eos}")
+    y_str = strings.str_split(f"{bos}satuɲa{eos}")
+    alignment, edits = aligner.get_alignment(x_str, y_str, sep=" ")
+    print(f"Edits for alignment of {x_str} and {y_str}")
     print(edits)
     print()
     #sys.exit(0)
@@ -234,18 +248,21 @@ if __name__ == "__main__":
         "llama-llama", "doggy-oggy", "piggy-wiggy", "snalnal", "snalfak",
         "wofewo"
     ]
-    strx = examples[2]
-    strx = [strx[i] for i in range(len(strx)) if strx[i] != "-"]
-    print(strx)
-    aligns = self_aligner.get_alignment(strx, sep="")
-    #pprint(aligns)
+    x_str = examples[2]
+    x_str = [x_str[i] for i in range(len(x_str)) if x_str[i] != "-"]
+    x_str = "".join(x_str)
+    print(x_str)
+    salign = self_aligner.get_alignment(x_str, sep="", incremental=False)[0]
+    print(salign)
+    print(self_aligner.markup_alignment(salign, sep=""))
+    sys.exit(0)
 
-    #strx = "s a t u s a t u ɲ a"
-    strx = "s ə s ə p e t"
-    stry = strx.split(" ")
-    stry_ = stry[:4]
-    _stry = stry[4:]
-    print(stry_, _stry)
+    #x_str = "s a t u s a t u ɲ a"
+    x_str = "s ə s ə p e t"
+    x_str_ = x_str.split(" ")
+    x_prefix = x_str_[:4]
+    x_suffix = x_str_[4:]
+    print(x_prefix, x_suffix)
 
     def match_func(seg1, seg2):
         return features.segment_similarity(
@@ -259,8 +276,8 @@ if __name__ == "__main__":
 
     aligner = SmithWaterman(match_func=match_func,
                             gap_char=phon_config.epsilon)
-    align = aligner.get_alignment(stry_,
-                                  _stry,
+    align = aligner.get_alignment(x_prefix,
+                                  x_suffix,
                                   return_indices=True,
                                   return_score_matrix=True)
     print(len(align))
