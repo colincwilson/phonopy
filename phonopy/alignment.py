@@ -17,8 +17,6 @@ from phonopy import (features, strings)
 
 fm = features.read_features()
 
-SelfAlignment = namedtuple("SelfAlignment", ["score", "x", "i", "j", "align"])
-
 # # # # # # # # # #
 
 
@@ -101,26 +99,35 @@ class SelfAligner():
 
     def __init__(self,
                  match_func=None,
+                 theta=0.75,
                  epsilon=phon_config.epsilon,
                  verbose=False):
         if match_func is None:
-            match_func = self.match_func_default
+            match_func = self.get_match_func(theta)
+        self.match_func = match_func
+        self.exact_match_func = \
+            lambda seg1, seg2: 1.0 if seg1 == seg2 else 0.0
+        self.theta = theta
         self.epsilon = epsilon
         self.aligner = SmithWaterman(match_func=match_func, gap_char=epsilon)
         self.verbose = verbose
 
-    def match_func_default(self, seg1, seg2):
+    def get_match_func(self, theta):
         """
         Default match function returning segment similarity.
         """
-        return features.segment_similarity(
-            fm,
-            seg1,
-            seg2,
-            sim_func=features.overlap_similarity,
-            feature_weights=None,
-            offset=-0.75,
-            indel_weight=-1.0)
+
+        def match_func(seg1, seg2):
+            return features.segment_similarity(
+                fm,
+                seg1,
+                seg2,
+                sim_func=features.overlap_similarity,
+                feature_weights=None,
+                theta=theta,
+                indel_weight=-1.0)
+
+        return match_func
 
     def get_alignment(self, x, sep=" ", incremental=True, verbose=None):
         """
@@ -149,44 +156,80 @@ class SelfAligner():
             prefix_posns = [xlen]
 
         # Iterative over prefixes.
+        idx = 0
         for i in prefix_posns:
             prefix = x_[:i]
-            # Find best alignment within a prefix.
+            # Find best alignment within prefix.
             salign_best = None
             score_best = None
             # Iterate over split/offset points within prefix.
             for j in range(1, len(prefix)):
                 prefix_ = prefix[:j]
                 _suffix = prefix[j:]
+                self.aligner.match_func = self.match_func
                 align = self.aligner.get_alignment( \
                     prefix_, _suffix, return_indices=True)
                 score = self.aligner.get_alignment_score( \
                     align.strings[0], align.strings[1])
-                # score /= (xlen / 2) # normalize by string length
-                # score /= (i / 2) # normalize by prefix length
                 score = float(score)
-                salign = SelfAlignment(score=score, x=x, i=i, j=j, align=align)
-                ret.append(salign)
+                # Normalize exact matches by max possible given span lengths.
+                self.aligner.match_func = self.exact_match_func
+                exact_score = self.aligner.get_alignment_score( \
+                    align.strings[0], align.strings[1])
+                (span1_len, span2_len) = SelfAlignment.get_span_lengths(align)
+                max_span_len = max(span1_len, span2_len)
+                if max_span_len > 0:
+                    exact_score = exact_score / max_span_len
+                else:
+                    exact_score = 0.0
+                # Create object for this alignment.
+                salign = SelfAlignment(score=score,
+                                       exact_score=exact_score,
+                                       x=x,
+                                       i=i,
+                                       j=j,
+                                       align=align)
+                # Sort alignments by score, exact match score, order (idx).
+                ret.append((score, exact_score, idx, salign))
                 if score_best is None or score > score_best:
                     score_best = score
                     salign_best = salign
                     offset_best = j
+                idx += 1
 
             if verbose_flag:
-                print(
-                    f"prefix len {i}, {self.markup_alignment(salign_best, sep)}, {score_best}"
-                )
+                print(f"prefix len {i}, {salign_best.pprint()}, {score_best}")
 
         ret = list(ret)
         heapq.heapify_max(ret)
         return ret
 
-    def markup_alignment(self, salign, sep=" "):
+
+class SelfAlignment():
+    """
+    Self-alignment result.
+    """
+
+    def __init__(self, score, exact_score, x, i, j, align):
+        self.score = score  # Alignment score.
+        self.exact_score = exact_score  # Exact match score.
+        self.x = x  # Source string/sequence.
+        self.i = i  # Prefix position.
+        self.j = j  # Split/offset position within prefix.
+        self.align = align  # Alignment object (see string2string.alignment).
+        # Lengths of aligned spans, and maximum span length.
+        self.span1_len, self.span2_len = self.get_span_lengths(align)
+        self.max_span_len = max(self.span1_len, self.span2_len)
+
+    def __rep__(self):
+        return f"SelfAlignment(score={self.score}, exact_score={self.exact_score}, x={self.x}, i={self.i}, j={self.j}, span1_len={self.span1_len}, span2_len={self.span2_len}, align={self.align})"
+
+    def pprint(self, sep=" "):
         # todo: add correspondence indices to aligned subparts
-        x = salign.x
-        i = salign.i
-        j = salign.j
-        align = salign.align
+        x = self.x
+        i = self.i
+        j = self.j
+        align = self.align
         align_strings = align.strings
         align_indices = align.indices
         if align_strings is None \
@@ -211,9 +254,11 @@ class SelfAligner():
             + ["⟨"] + x_[span2[0]:span2[1]] + ["⟩"] \
             + x_[span2[1]:]
         y = " ".join(y)
+
         return y
 
-    def adjust_indices(self, align, offset):
+    @classmethod
+    def adjust_indices(cls, align, offset):
         """
         Adjust the indices of an alignment to account for the fact that the
         beginning of the second string is offset relative to the first string.
@@ -224,6 +269,16 @@ class SelfAligner():
         span2 = align.indices[1]
         span2 = (span2[0] + offset, span2[1] + offset)
         return (span1, span2)
+
+    @classmethod
+    def get_span_lengths(cls, align):
+        """
+        Get lengths of aligned spans.
+        """
+        span1, span2 = align.indices
+        span1_len = (span1[1] - span1[0])
+        span2_len = (span2[1] - span2[0])
+        return (span1_len, span2_len)
 
 
 # # # # # # # # # #
@@ -271,7 +326,7 @@ if __name__ == "__main__":
             seg2,
             sim_func=features.overlap_similarity,
             feature_weights=None,
-            offset=-0.75,
+            theta=0.75,
             indel_weight=-1.0)
 
     aligner = SmithWaterman(match_func=match_func,

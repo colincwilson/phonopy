@@ -17,8 +17,8 @@ default_feature_file = Path.home() / \
 
 default_segments = [
     "p", "b", "t", "d", "t͡ʃ", "k", "g", "ʔ", "f", "s", "ʃ", "h", "m", "n",
-    "ɲ", "ŋ", "r", "j", "w", "l"
-] + ["i", "e", "a", "o", "u"]
+    "ɲ", "ŋ", "r", "j", "w", "l"] + \
+    ["i", "e", "a", "o", "u"]
 # ref. Maddieson (1986)
 
 # # # # # # # # # #
@@ -579,7 +579,7 @@ to_str = ftrs2str
 
 # # # # # # # # # #
 # Feature-based similarity of segments.
-def cosine_similarity(vec1, vec2, feature_weights=None, offset=0.0):
+def cosine_similarity(vec1, vec2, feature_weights=None, theta=0.0):
     """ (Weighted) Cosine similarity of two vectors. """
     if feature_weights is not None:
         vec1 = vec1 * feature_weights
@@ -591,7 +591,7 @@ def cosine_similarity(vec1, vec2, feature_weights=None, offset=0.0):
     return sim
 
 
-def overlap_similarity(vec1, vec2, feature_weights=None, offset=-0.5):
+def overlap_similarity(vec1, vec2, feature_weights=None, theta=0.5):
     """
     (Weighted) Jaccard similarity, treating [+F] and [-F] as different features.
     """
@@ -612,7 +612,9 @@ def overlap_similarity(vec1, vec2, feature_weights=None, offset=-0.5):
                     overlap += feature_weights[i] * np.abs(vec1[i])
                 else:
                     overlap += np.abs(vec1[i])
-    sim = overlap / (norm1 * norm2) + offset
+
+    sim = overlap / (norm1 * norm2)  # Value in [0, 1].
+    sim -= theta  # Value in [-theta, 1-theta].
     return sim
 
 
@@ -621,20 +623,23 @@ def segment_similarity(fm,
                        seg2,
                        sim_func=cosine_similarity,
                        feature_weights=None,
-                       offset=0.0,
+                       theta=0.0,
                        indel_weight=-1):
     """
     Return similarity of two segments based on feature vectors.
     Default similarity function is cosine similarity.
     """
     if indel_weight is not None:
-        if seg1 == phon_config.epsilon or seg2 == phon_config.epsilon:
-            return indel_weight
+        seg1_eps = (seg1 == phon_config.epsilon)
+        seg2_eps = (seg2 == phon_config.epsilon)
+        if seg1_eps or seg2_eps:
+            sim = indel_weight if (seg1_eps != seg2_eps) else 0.0
+            return sim
     ftrs1 = fm.seg2ftr_vec[seg1]
     ftrs2 = fm.seg2ftr_vec[seg2]
     ftrs1 = ftr_vec2np(ftrs1)
     ftrs2 = ftr_vec2np(ftrs2)
-    sim = sim_func(ftrs1, ftrs2, feature_weights, offset)
+    sim = sim_func(ftrs1, ftrs2, feature_weights, theta)
     return sim
 
 
